@@ -18,7 +18,7 @@
 	},
 
 	"name": "CoreRCON",
-	"version": "0.0.1-*",
+	"version": "0.0.2-*",
 	"title": "CoreRCON",
 	"authors": [ "Scott Kaye" ],
 	"projectUrl": "https://github.com/ScottKaye/CoreRCON",

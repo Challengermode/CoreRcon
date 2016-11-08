@@ -92,7 +92,7 @@ namespace CoreRCON
 			where T : class
 		{
 			// Instantiate the parser associated with the type parameter
-			var implementor = Assembly.GetEntryAssembly().GetTypes().FirstOrDefault(t => t.GetInterfaces().Contains(typeof(IParser<T>)));
+			var implementor = GetType().GetTypeInfo().Assembly.GetTypes().FirstOrDefault(t => t.GetInterfaces().Contains(typeof(IParser<T>)));
 			if (implementor == null) throw new ArgumentException($"A class implementing {nameof(IParser)}<{typeof(T).FullName}> was not found in the assembly.");
 			var instance = (IParser<T>)Activator.CreateInstance(implementor);
 
