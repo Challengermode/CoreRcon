@@ -1,13 +1,51 @@
-﻿{
-  "version": "1.0.0-*",
+{
+	"buildOptions": {
+		"emitEntryPoint": true,
+		"optimize": true,
+		"warningsAsErrors": true
+	},
 
-  "dependencies": {
-    "NETStandard.Library": "1.6.0"
-  },
+	"packOptions": {
+		"owners": [ "Kredit" ],
+		"repository": {
+			"type": "git",
+			"url": "https://github.com/ScottKaye/CoreRCON"
+		},
+		"requireLicenseAcceptance": false,
+		"summary": "A .NET Core implementation of Valve's RCON spec and SRCDS's logaddress function.",
+		"releaseNotes": "Initial alpha release.",
+		"tags": [ "valve", "rcon", "logaddress", "srcds" ]
+	},
 
-  "frameworks": {
-    "netstandard1.6": {
-      "imports": "dnxcore50"
-    }
-  }
+	"name": "CoreRCON",
+	"version": "0.0.1-*",
+	"title": "CoreRCON",
+	"authors": [ "Scott Kaye" ],
+	"projectUrl": "https://github.com/ScottKaye/CoreRCON",
+	"description": "A .NET Core implementation of Valve's RCON spec and SRCDS's logaddress function.",
+
+	"scripts": {
+		"postcompile": [
+			"dotnet pack --no-build --configuration %compile:Configuration%"
+		]
+	},
+
+	"dependencies": {
+		"Microsoft.NETCore.App": {
+			"type": "platform",
+			"version": "1.0.0"
+		},
+		"System.Globalization": "4.4.0-beta-24623-01",
+		"System.IO": "4.4.0-beta-24623-01",
+		"System.Net.Sockets": "4.4.0-beta-24623-01",
+		"System.Reflection": "4.4.0-beta-24623-01",
+		"System.Text.Encoding": "4.4.0-beta-24623-01",
+		"System.Text.RegularExpressions": "4.1.0"
+	},
+
+	"frameworks": {
+		"netcoreapp1.0": {
+			"imports": "dnxcore50"
+		}
+	}
 }
