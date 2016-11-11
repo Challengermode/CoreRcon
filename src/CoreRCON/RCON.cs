@@ -180,7 +180,7 @@ namespace CoreRCON
 		/// Send a packet to the server.
 		/// </summary>
 		/// <param name="packet">Packet to send, which will be serialized.</param>
-		public async Task SendPacketAsync(RCONPacket packet)
+		internal async Task SendPacketAsync(RCONPacket packet)
 		{
 			sockets.TCP.Send(packet.ToBytes());
 			await Task.Delay(10);

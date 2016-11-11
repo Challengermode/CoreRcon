@@ -1,9 +1,9 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace CoreRCON.Parsers.Standard
+namespace CoreRCON.Parsers
 {
 	/// <summary>
-	/// Default implementation of IParser<T>
+	/// Default implementation of IParser(T)
 	/// </summary>
 	/// <typeparam name="T">Type of object the parser returns.</typeparam>
 	public abstract class DefaultParser<T> : IParser<T>
