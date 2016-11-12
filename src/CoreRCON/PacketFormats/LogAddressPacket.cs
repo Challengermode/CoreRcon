@@ -73,7 +73,10 @@ namespace CoreRCON.PacketFormats
 			if (!buffer.Take(4).SequenceEqual(new byte[] { 255, 255, 255, 255 })) throw new InvalidDataException("LogAddress packet does not contain a valid header.");
 
 			bool hasPassword = buffer[5] == 83;
+
+			// Force string to \r\n line endings
 			string body = new string(Encoding.UTF8.GetChars(buffer, 5, buffer.Length - 7));
+			body = Regex.Replace(body, @"\r\n|\n\r|\n|\r", "\r\n");
 
 			return new LogAddressPacket(hasPassword, body);
 		}

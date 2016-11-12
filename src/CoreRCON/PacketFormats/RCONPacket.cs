@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace CoreRCON.PacketFormats
 {
@@ -61,8 +62,11 @@ namespace CoreRCON.PacketFormats
 			int id = BitConverter.ToInt32(buffer, 4);
 			PacketType type = (PacketType)BitConverter.ToInt32(buffer, 8);
 
-			char[] body = Encoding.UTF8.GetChars(buffer, 12, size - 10);
-			return new RCONPacket(id, type, new string(body, 0, size - 10).TrimEnd());
+			// Force string to \r\n line endings
+			char[] rawBody = Encoding.UTF8.GetChars(buffer, 12, size - 10);
+			string body = new string(rawBody, 0, size - 10).TrimEnd();
+			body = Regex.Replace(body, @"\r\n|\n\r|\n|\r", "\r\n");
+			return new RCONPacket(id, type, body);
 		}
 
 		public override string ToString() => Body;

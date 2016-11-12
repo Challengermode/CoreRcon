@@ -1,4 +1,5 @@
 ﻿using CoreRCON.PacketFormats;
+using CoreRCON.Parsers.Standard;
 using System;
 using System.Threading.Tasks;
 
@@ -18,16 +19,26 @@ namespace CoreRCON
 				await rcon.StartLogging("192.168.1.8");
 
 				// Listen for chat messages
-				rcon.Listen<Parsers.Standard.ChatMessage>(chat =>
+				rcon.Listen<ChatMessage>(chat =>
 				{
 					Console.WriteLine($"Chat message: {chat.Player.Name} said {chat.Message} on channel {chat.Channel}");
 				});
 
 				// Listen for kills
-				rcon.Listen<Parsers.Standard.KillFeed>(kill =>
+				rcon.Listen<KillFeed>(kill =>
 				{
 					Console.WriteLine($"Player {kill.Killer.Name} ({kill.Killer.Team}) killed {kill.Killed.Name} ({kill.Killed.Team}) with {kill.Weapon}");
 				});
+
+				// Typed command responses
+				await rcon.SendCommandAsync<Status>("status", status =>
+				{
+					Console.WriteLine($"Server public host is: {status.PublicHost}");
+				});
+
+				// Or block until the response is received:
+				var blockedStatus = await rcon.SendCommandAsync<Status>("status");
+				Console.WriteLine($"Blocked status: {blockedStatus.Hostname}");
 
 				// Listen to all raw responses as strings
 				rcon.Listen(raw =>

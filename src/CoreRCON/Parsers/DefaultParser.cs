@@ -11,11 +11,11 @@ namespace CoreRCON.Parsers
 	{
 		public abstract string Pattern { get; }
 		public abstract T Load(GroupCollection groups);
-		public virtual bool IsMatch(string input) => new Regex(Pattern).IsMatch(input);
+		public virtual bool IsMatch(string input) => new Regex(Pattern, RegexOptions.Singleline).IsMatch(input);
 		public virtual T Parse(Group group) => Parse(group.Value);
 		public T Parse(string input)
 		{
-			var groups = new Regex(Pattern).Match(input).Groups;
+			var groups = new Regex(Pattern, RegexOptions.Singleline).Match(input).Groups;
 			return Load(groups);
 		}
 	}

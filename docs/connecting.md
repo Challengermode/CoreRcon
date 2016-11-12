@@ -19,3 +19,18 @@ await rcon.SendCommandAsync("status", stats => {
 	Console.WriteLine($"Status is: {stats}");
 });
 ```
+
+You can optionally returned a strongly-typed result, if a parser exists for it:
+
+```cs
+await rcon.SendCommandAsync<Status>("status", stats => {
+	Console.WriteLine($"Status hostname is: {stats.Hostname}");
+});
+```
+
+In case you're not a fan of the callback pattern, `SendCommandAsync` can be used as a block by simply not providing any callback:
+
+```cs
+var status = await rcon.SendCommandAsync<Status>("status");
+Console.WriteLine($"Blocked status: {status.Hostname}");
+```

@@ -89,22 +89,17 @@ namespace CoreRCON
 		/// <typeparam name="T">Class to be parsed; must have a ParserAttribute.</typeparam>
 		/// <param name="result">Parsed class.</param>
 		public void Listen<T>(Action<T> result)
-			where T : class
+			where T : class, new()
 		{
 			// Instantiate the parser associated with the type parameter
-			var implementor = GetType().GetTypeInfo().Assembly.GetTypes().FirstOrDefault(t => t.GetInterfaces().Contains(typeof(IParser<T>)));
-			if (implementor == null) throw new ArgumentException($"A class implementing {nameof(IParser)}<{typeof(T).FullName}> was not found in the assembly.");
-			var instance = (IParser<T>)Activator.CreateInstance(implementor);
+			var instance = ParserHelpers.GetParser<T>();
 
 			// Create the parser container
 			parseListeners.Add(new ParserContainer
 			{
 				IsMatch = line => instance.IsMatch(line),
 				Parse = line => instance.Parse(line),
-				Callback = parsed =>
-				{
-					result(parsed as T);
-				}
+				Callback = parsed => result(parsed as T)
 			});
 		}
 
@@ -132,7 +127,7 @@ namespace CoreRCON
 		/// Polls the server to check if RCON is still authenticated.  Will still throw if the password was changed elsewhere.
 		/// </summary>
 		/// <param name="delay">Time in milliseconds to wait between polls.</param>
-		public async Task KeepAliveAsync(int delay = 60000)
+		public async Task KeepAliveAsync(int delay = 30000)
 		{
 			while (true)
 			{
@@ -177,16 +172,6 @@ namespace CoreRCON
 		}
 
 		/// <summary>
-		/// Send a packet to the server.
-		/// </summary>
-		/// <param name="packet">Packet to send, which will be serialized.</param>
-		internal async Task SendPacketAsync(RCONPacket packet)
-		{
-			sockets.TCP.Send(packet.ToBytes());
-			await Task.Delay(10);
-		}
-
-		/// <summary>
 		/// Send a command to the server, and call the result when a response is received.
 		/// </summary>
 		/// <param name="command">Command to send to the server.</param>
@@ -197,6 +182,40 @@ namespace CoreRCON
 			RCONPacket packet = new RCONPacket(++packetId, PacketType.ExecCommand, command);
 			pendingCommands.Add(packetId, result);
 			await SendPacketAsync(packet);
+		}
+
+		public async Task SendCommandAsync<T>(string command, Action<T> result)
+			where T : class, new()
+		{
+			var instance = ParserHelpers.GetParser<T>();
+			var container = new ParserContainer
+			{
+				IsMatch = line => instance.IsMatch(line),
+				Parse = line => instance.Parse(line),
+				Callback = parsed => result(parsed as T)
+			};
+
+			RCONPacket packet = new RCONPacket(++packetId, PacketType.ExecCommand, command);
+			pendingCommands.Add(packetId, container.TryCallback);
+			await SendPacketAsync(packet);
+		}
+
+		public async Task<T> SendCommandAsync<T>(string command)
+			where T : class, new()
+		{
+			var source = new TaskCompletionSource<T>();
+			await SendCommandAsync<T>(command, source.SetResult);
+			return await source.Task;
+		}
+
+		/// <summary>
+		/// Send a packet to the server.
+		/// </summary>
+		/// <param name="packet">Packet to send, which will be serialized.</param>
+		private async Task SendPacketAsync(RCONPacket packet)
+		{
+			sockets.TCP.Send(packet.ToBytes());
+			await Task.Delay(10);
 		}
 
 		/// <summary>
