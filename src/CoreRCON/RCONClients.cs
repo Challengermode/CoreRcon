@@ -7,7 +7,7 @@ namespace CoreRCON
 		internal Socket TCP { get; set; }
 		internal UdpClient UDP { get; set; }
 
-		internal void Reset(int udpPort = 7744)
+		internal void Reset(ushort udpPort)
 		{
 			TCP = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 			UDP = new UdpClient(udpPort);

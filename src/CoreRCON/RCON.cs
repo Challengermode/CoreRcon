@@ -49,8 +49,9 @@ namespace CoreRCON
 		/// <param name="host">Resolvable hostname.</param>
 		/// <param name="port">Port number RCON is listening on.</param>
 		/// <param name="password">RCON password.</param>
+		/// <param name="udpPort">UDP port to use if you plan on receiving logaddress logs.  Be sure to call StartLogging!</param>
 		/// <returns>Awaitable which will complete when a successful connection is made and authentication is successful.</returns>
-		public async Task ConnectAsync(IPAddress host, ushort port, string password)
+		public async Task ConnectAsync(IPAddress host, ushort port, string password, ushort udpPort = 7744)
 		{
 			Host = host;
 			Port = port;
@@ -59,7 +60,7 @@ namespace CoreRCON
 			if (Host == null) throw new NullReferenceException("Hostname cannot be null.");
 			if (Password == null) throw new NullReferenceException("Password cannot be null (authentication will always fail).");
 
-			sockets.Reset();
+			sockets.Reset(udpPort);
 			await sockets.TCP.ConnectAsync(Host, Port);
 
 			// Set up TCP listener
@@ -77,9 +78,17 @@ namespace CoreRCON
 		}
 
 		// .NET Core on Linux doesn't support ConnectAsync with a hostname string, so we cheat and make sure it's an IP address
-		public async Task ConnectAsync(string ip, ushort port, string password)
+		/// <summary>
+		/// Connect to a server through RCON.  Automatically sends the authentication packet.
+		/// </summary>
+		/// <param name="host">Resolvable hostname.</param>
+		/// <param name="port">Port number RCON is listening on.</param>
+		/// <param name="password">RCON password.</param>
+		/// <param name="udpPort">UDP port to use if you plan on receiving logaddress logs.  Be sure to call StartLogging!</param>
+		/// <returns>Awaitable which will complete when a successful connection is made and authentication is successful.</returns>
+		public async Task ConnectAsync(string ip, ushort port, string password, ushort udpPort = 7744)
 		{
-			await ConnectAsync(IPAddress.Parse(ip), port, password);
+			await ConnectAsync(IPAddress.Parse(ip), port, password, udpPort);
 		}
 
 		/// <summary>

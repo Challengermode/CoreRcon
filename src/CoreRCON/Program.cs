@@ -15,7 +15,7 @@ namespace CoreRCON
 			var task = Task.Run(async () =>
 			{
 				var rcon = new RCON();
-				await rcon.ConnectAsync("192.168.1.8", 27015, "rcon");
+				await rcon.ConnectAsync("192.168.1.8", 27015, "rcon", 60000);
 				await rcon.StartLogging("192.168.1.8");
 
 				// Listen for chat messages
@@ -28,6 +28,21 @@ namespace CoreRCON
 				rcon.Listen<KillFeed>(kill =>
 				{
 					Console.WriteLine($"Player {kill.Killer.Name} ({kill.Killer.Team}) killed {kill.Killed.Name} ({kill.Killed.Team}) with {kill.Weapon}");
+				});
+
+				rcon.Listen<PlayerConnected>(connection =>
+				{
+					Console.WriteLine($"Player {connection.Player.Name} connected with host {connection.Host}");
+				});
+
+				rcon.Listen<PlayerDisconnected>(dis =>
+				{
+					Console.WriteLine($"Player {dis.Player.Name} disconnected");
+				});
+
+				rcon.Listen<NameChange>(name =>
+				{
+					Console.WriteLine($"{name.Player.Name} changed name to {name.NewName}");
 				});
 
 				// Typed command responses

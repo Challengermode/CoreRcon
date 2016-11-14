@@ -12,7 +12,7 @@ namespace CoreRCON.Parsers.Standard
 
 	public class PlayerParser : DefaultParser<Player>
 	{
-		public override string Pattern { get; } = "\"(?<Name>.+?(?:<.*>)*)<(?<ClientID>\\d+?)><(?<SteamID>.+?)><(?<Team>.+?)>\"";
+		public override string Pattern { get; } = "\"(?<Name>.+?(?:<.*>)*)<(?<ClientID>\\d+?)><(?<SteamID>.+?)><(?<Team>.+?)?>\"";
 
 		public override Player Load(GroupCollection groups)
 		{

@@ -7,7 +7,7 @@ Pass your public IP into `StartLogging` to tell SRCDS to send you log packets.
 await rcon.StartLogging("127.0.0.1");
 ```
 
-Also note that the IP supplied here is what SRCDS will try to send packets to.  Unless SRCDS is running locally, you **must** provide a public/external IP address to receive any logs.  The port is `7744` - at the present time there is no way to change this.
+Also note that the IP supplied here is what SRCDS will try to send packets to.  Unless SRCDS is running locally, you **must** provide a public/external IP address to receive any logs.  The port is `7744` - if you would like to change it, pass it as a fourth argument into your `RCON` constructor.
 
 ## Receiving logs
 Once you are listening, you are free to set up listeners for various forms of parseable packets.  This allows you to receive strongly-typed data from the server, parsed by some intense regular expressions.
