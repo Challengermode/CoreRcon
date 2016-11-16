@@ -10,3 +10,8 @@ CoreRCON is available on NuGet, and can be installed with:
 ```
 Install-Package CoreRCON
 ```
+
+If you run into issues downloading dependencies, try adding the development .NET Core stream to your NuGet package sources.
+```
+https://dotnet.myget.org/F/dotnet-core/api/v3/index.json
+```
