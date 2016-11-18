@@ -2,7 +2,7 @@
 
 namespace CoreRCON.Parsers.Standard
 {
-	public class KillFeed
+	public class KillFeed : IParseable
 	{
 		public Player Killer { get; set; }
 		public Player Killed { get; set; }

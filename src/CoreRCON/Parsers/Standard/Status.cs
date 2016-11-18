@@ -2,7 +2,7 @@
 
 namespace CoreRCON.Parsers.Standard
 {
-	public class Status
+	public class Status : IParseable
 	{
 		public string Hostname { get; set; }
 		public string Version { get; set; }

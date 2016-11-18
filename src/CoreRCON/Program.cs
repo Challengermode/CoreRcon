@@ -1,6 +1,7 @@
 ﻿using CoreRCON.PacketFormats;
 using CoreRCON.Parsers.Standard;
 using System;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace CoreRCON
@@ -14,9 +15,23 @@ namespace CoreRCON
 		{
 			var task = Task.Run(async () =>
 			{
-				var rcon = new RCON();
-				await rcon.ConnectAsync("192.168.1.8", 27015, "rcon", 60000);
-				await rcon.StartLogging("192.168.1.8");
+				var rcon = new RCON(new RCONOptions
+				{
+					ServerHost = IPAddress.Parse("192.168.1.8"),
+					ServerPort = 27015,
+					Password = "rcon",
+					EnableLogging = true,
+					LogHost = IPAddress.Parse("192.168.1.8"),
+					LogPort = 0,
+					DisconnectionCheckInterval = 1000
+				});
+
+				await rcon.ConnectAsync();
+
+				rcon.OnDisconnected += () =>
+				{
+					Console.WriteLine("Server closed connection!");
+				};
 
 				// Listen for chat messages
 				rcon.Listen<ChatMessage>(chat =>
@@ -45,30 +60,7 @@ namespace CoreRCON
 					Console.WriteLine($"{name.Player.Name} changed name to {name.NewName}");
 				});
 
-				// Typed command responses
-				await rcon.SendCommandAsync<Status>("status", status =>
-				{
-					Console.WriteLine($"Server public host is: {status.PublicHost}");
-				});
-
-				// Or block until the response is received:
-				var blockedStatus = await rcon.SendCommandAsync<Status>("status");
-				Console.WriteLine($"Blocked status: {blockedStatus.Hostname}");
-
-				// Listen to all raw responses as strings
-				rcon.Listen(raw =>
-				{
-					Console.WriteLine($"Received a raw string: {raw.Truncate(100).Replace("\n", "")}");
-				});
-
-				// Listen to all raw responses, but get their full packets
-				rcon.Listen((LogAddressPacket packet) =>
-				{
-					Console.WriteLine($"Received a LogAddressPacket: Time - {packet.Timestamp} Body - {packet.Body}");
-				});
-
-				// Reconnect if the connection is ever lost
-				await rcon.KeepAliveAsync();
+				await Task.Delay(-1);
 			});
 
 			// .Wait() puts exceptions into an AggregateException, while .GetResult() doesn't

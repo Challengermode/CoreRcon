@@ -2,7 +2,7 @@
 
 namespace CoreRCON.Parsers.Standard
 {
-	public class NameChange
+	public class NameChange : IParseable
 	{
 		public Player Player { get; set; }
 		public string NewName { get; set; }

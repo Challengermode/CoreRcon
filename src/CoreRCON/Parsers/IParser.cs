@@ -2,6 +2,9 @@
 
 namespace CoreRCON.Parsers
 {
+	// Purely for type constraints
+	public interface IParseable { }
+
 	public interface IParser { }
 
 	public interface IParser<T> : IParser

@@ -2,7 +2,7 @@
 
 namespace CoreRCON.Parsers.Standard
 {
-	public class PlayerDisconnected
+	public class PlayerDisconnected : IParseable
 	{
 		public Player Player { get; set; }
 	}

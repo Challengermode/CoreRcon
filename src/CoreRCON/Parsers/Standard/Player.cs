@@ -2,7 +2,7 @@
 
 namespace CoreRCON.Parsers.Standard
 {
-	public class Player
+	public class Player : IParseable
 	{
 		public string Name { get; set; }
 		public string SteamId { get; set; }

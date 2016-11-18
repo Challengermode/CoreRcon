@@ -2,7 +2,7 @@
 
 namespace CoreRCON.Parsers.Standard
 {
-	public class ChatMessage
+	public class ChatMessage : IParseable
 	{
 		public MessageChannel Channel { get; set; }
 		public string Message { get; set; }
