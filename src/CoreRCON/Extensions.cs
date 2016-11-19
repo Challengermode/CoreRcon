@@ -4,9 +4,6 @@ namespace CoreRCON
 {
 	internal static class Extensions
 	{
-		// Idea for this goes to http://stackoverflow.com/a/29319061/382456 - thank you!
-		internal static void DoNotAwait(this Task task) { }
-
 		/// <summary>
 		/// Truncate a string to a maximum length.
 		/// </summary>

@@ -22,11 +22,21 @@ namespace CoreRCON
 					Password = "rcon",
 					EnableLogging = true,
 					LogHost = IPAddress.Parse("192.168.1.8"),
-					LogPort = 0,
+					LogPort = 56180,
 					DisconnectionCheckInterval = 1000
 				});
 
 				await rcon.ConnectAsync();
+
+				rcon.SendCommand("echo test", test =>
+				{
+					Console.WriteLine(test);
+				});
+
+				rcon.SendCommand("echo test2", test2 =>
+				{
+					Console.WriteLine(test2);
+				});
 
 				rcon.OnDisconnected += () =>
 				{

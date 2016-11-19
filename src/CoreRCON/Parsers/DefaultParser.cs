@@ -7,7 +7,7 @@ namespace CoreRCON.Parsers
 	/// </summary>
 	/// <typeparam name="T">Type of object the parser returns.</typeparam>
 	public abstract class DefaultParser<T> : IParser<T>
-		where T : class
+		where T : class, IParseable
 	{
 		public abstract string Pattern { get; }
 		public abstract T Load(GroupCollection groups);
