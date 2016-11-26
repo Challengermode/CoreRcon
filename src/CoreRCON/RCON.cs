@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace CoreRCON
@@ -13,8 +14,10 @@ namespace CoreRCON
 		// Since packets containing the special check string are thrown out, add some randomness to it so users can't add the check string to their name and fly under-the-radar.
 		private static string _identifier;
 
+		private readonly object _lock = new object();
+
 		// When generating the packet ID, use a never-been-used (for automatic packets) ID.
-		private static int _packetId = 1;
+		private int _packetId = 1;
 
 		// Allows us to keep track of when authentication succeeds, so we can block Connect from returning until it does.
 		private TaskCompletionSource<bool> _authenticationTask;
@@ -84,6 +87,7 @@ namespace CoreRCON
 		public async Task<T> SendCommandAsync<T>(string command)
 			where T : class, IParseable, new()
 		{
+			Monitor.Enter(_lock);
 			var source = new TaskCompletionSource<T>();
 			var instance = ParserHelpers.GetParser<T>();
 
@@ -95,7 +99,10 @@ namespace CoreRCON
 			};
 
 			_pendingCommands.Add(++_packetId, container.TryCallback);
-			await SendPacketAsync(new RCONPacket(_packetId, PacketType.ExecCommand, command));
+			var packet = new RCONPacket(_packetId, PacketType.ExecCommand, command);
+			Monitor.Exit(_lock);
+
+			await SendPacketAsync(packet);
 			return await source.Task;
 		}
 
@@ -105,9 +112,13 @@ namespace CoreRCON
 		/// <param name="command">Command to send to the server.</param>
 		public async Task<string> SendCommandAsync(string command)
 		{
+			Monitor.Enter(_lock);
 			var source = new TaskCompletionSource<string>();
 			_pendingCommands.Add(++_packetId, source.SetResult);
-			await SendPacketAsync(new RCONPacket(_packetId, PacketType.ExecCommand, command));
+			var packet = new RCONPacket(_packetId, PacketType.ExecCommand, command);
+			Monitor.Exit(_lock);
+
+			await SendPacketAsync(packet);
 			return await source.Task;
 		}
 
@@ -130,7 +141,6 @@ namespace CoreRCON
 		{
 			if (!_connected) throw new InvalidOperationException("Connection is closed.");
 			await _tcp.SendAsync(new ArraySegment<byte>(packet.ToBytes()), SocketFlags.None);
-			//await Task.Delay(100);
 		}
 
 		/// <summary>
