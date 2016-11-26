@@ -14,8 +14,11 @@ namespace CoreRCON
 		{
 			var task = Task.Run(async () =>
 			{
-				var rcon = new CoreRCON.RCON(IPAddress.Parse("192.168.1.8"), 27015, "rcon");
-				var log = new CoreRCON.LogReceiver(IPAddress.Parse("192.168.1.8"), 56180);
+				var rcon = new RCON(IPAddress.Parse("192.168.1.8"), 27015, "rcon");
+				var log = new LogReceiver(IPAddress.Parse("192.168.1.8"), 0);
+
+				// Tell the server to send logs here
+				await rcon.SendCommandAsync($"logaddress_add 192.168.1.8:{log.ResolvedPort}");
 
 				rcon.OnDisconnected += () =>
 				{
