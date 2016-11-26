@@ -62,11 +62,19 @@ namespace CoreRCON.PacketFormats
 			int id = BitConverter.ToInt32(buffer, 4);
 			PacketType type = (PacketType)BitConverter.ToInt32(buffer, 8);
 
-			// Force string to \r\n line endings
-			char[] rawBody = Encoding.UTF8.GetChars(buffer, 12, size - 10);
-			string body = new string(rawBody, 0, size - 10).TrimEnd();
-			body = Regex.Replace(body, @"\r\n|\n\r|\n|\r", "\r\n");
-			return new RCONPacket(id, type, body);
+			try
+			{
+				// Force string to \r\n line endings
+				char[] rawBody = Encoding.UTF8.GetChars(buffer, 12, size - 10);
+				string body = new string(rawBody, 0, size - 10).TrimEnd();
+				body = Regex.Replace(body, @"\r\n|\n\r|\n|\r", "\r\n");
+				return new RCONPacket(id, type, body);
+			}
+			catch (Exception ex)
+			{
+				Console.Error.WriteLine($"{DateTime.Now} - Error reading RCON packet from server: " + ex.Message);
+				return new RCONPacket(id, type, "");
+			}
 		}
 
 		public override string ToString() => Body;

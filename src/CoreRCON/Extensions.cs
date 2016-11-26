@@ -4,6 +4,12 @@ namespace CoreRCON
 {
 	internal static class Extensions
 	{
+		// Trick VS into thinking this is a resolved task
+		internal static void Forget(this Task task)
+		{
+
+		}
+
 		/// <summary>
 		/// Truncate a string to a maximum length.
 		/// </summary>

@@ -72,13 +72,21 @@ namespace CoreRCON.PacketFormats
 			if (buffer.Length < 7) throw new InvalidDataException("LogAddress packet is of an invalid length.");
 			if (!buffer.Take(4).SequenceEqual(new byte[] { 255, 255, 255, 255 })) throw new InvalidDataException("LogAddress packet does not contain a valid header.");
 
+			// 83 = magic byte
 			bool hasPassword = buffer[5] == 83;
 
-			// Force string to \r\n line endings
-			string body = new string(Encoding.UTF8.GetChars(buffer, 5, buffer.Length - 7));
-			body = Regex.Replace(body, @"\r\n|\n\r|\n|\r", "\r\n");
-
-			return new LogAddressPacket(hasPassword, body);
+			try
+			{
+				// Force string to \r\n line endings
+				string body = new string(Encoding.UTF8.GetChars(buffer, 5, buffer.Length - 7));
+				body = Regex.Replace(body, @"\r\n|\n\r|\n|\r", "\r\n");
+				return new LogAddressPacket(hasPassword, body);
+			}
+			catch (Exception ex)
+			{
+				Console.Error.WriteLine($"{DateTime.Now} - Error reading logaddress packet from server: " + ex.Message);
+				return new LogAddressPacket(hasPassword, "");
+			}
 		}
 
 		public override string ToString() => RawBody;

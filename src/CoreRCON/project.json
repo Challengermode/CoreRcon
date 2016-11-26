@@ -11,12 +11,11 @@
 		},
 		"requireLicenseAcceptance": false,
 		"summary": "A .NET Core implementation of Valve's RCON spec and SRCDS's logaddress function.",
-		"releaseNotes": "Initial alpha release.",
 		"iconUrl": "https://cdn.rawgit.com/ScottKaye/CoreRCON/master/logo.png",
 		"tags": [ "valve", "rcon", "logaddress", "srcds" ]
 	},
 	"name": "CoreRCON",
-	"version": "0.1.0-*",
+	"version": "1.0.0-beta1",
 	"title": "CoreRCON",
 	"authors": [ "Scott Kaye" ],
 	"projectUrl": "https://github.com/ScottKaye/CoreRCON",

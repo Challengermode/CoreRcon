@@ -1,5 +1,4 @@
-﻿using CoreRCON.PacketFormats;
-using CoreRCON.Parsers.Standard;
+﻿using CoreRCON.Parsers.Standard;
 using System;
 using System.Net;
 using System.Threading.Tasks;
@@ -15,61 +14,45 @@ namespace CoreRCON
 		{
 			var task = Task.Run(async () =>
 			{
-				var rcon = new RCON(new RCONOptions
-				{
-					ServerHost = IPAddress.Parse("192.168.1.8"),
-					ServerPort = 27015,
-					Password = "rcon",
-					EnableLogging = true,
-					LogHost = IPAddress.Parse("192.168.1.8"),
-					LogPort = 56180,
-					DisconnectionCheckInterval = 1000
-				});
-
-				await rcon.ConnectAsync();
-
-				rcon.SendCommand("echo test", test =>
-				{
-					Console.WriteLine(test);
-				});
-
-				rcon.SendCommand("echo test2", test2 =>
-				{
-					Console.WriteLine(test2);
-				});
+				var rcon = new RCON(IPAddress.Parse("192.168.1.8"), 27015, "rcon");
+				var log = new RCON.LogReceiver(IPAddress.Parse("192.168.1.8"), 56180);
 
 				rcon.OnDisconnected += () =>
 				{
 					Console.WriteLine("Server closed connection!");
 				};
 
+				var status = await rcon.SendCommandAsync<Status>("status");
+				Console.WriteLine($"Got status, hostname is: {status.Hostname}");
+
 				// Listen for chat messages
-				rcon.Listen<ChatMessage>(chat =>
+				log.Listen<ChatMessage>(chat =>
 				{
 					Console.WriteLine($"Chat message: {chat.Player.Name} said {chat.Message} on channel {chat.Channel}");
 				});
 
 				// Listen for kills
-				rcon.Listen<KillFeed>(kill =>
+				log.Listen<KillFeed>(kill =>
 				{
 					Console.WriteLine($"Player {kill.Killer.Name} ({kill.Killer.Team}) killed {kill.Killed.Name} ({kill.Killed.Team}) with {kill.Weapon}");
 				});
 
-				rcon.Listen<PlayerConnected>(connection =>
+				log.Listen<PlayerConnected>(connection =>
 				{
 					Console.WriteLine($"Player {connection.Player.Name} connected with host {connection.Host}");
 				});
 
-				rcon.Listen<PlayerDisconnected>(dis =>
+				log.Listen<PlayerDisconnected>(dis =>
 				{
 					Console.WriteLine($"Player {dis.Player.Name} disconnected");
 				});
 
-				rcon.Listen<NameChange>(name =>
+				log.Listen<NameChange>(name =>
 				{
 					Console.WriteLine($"{name.Player.Name} changed name to {name.NewName}");
 				});
 
+				// Never stop
 				await Task.Delay(-1);
 			});
 
