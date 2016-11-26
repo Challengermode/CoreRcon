@@ -15,7 +15,7 @@
 		"tags": [ "valve", "rcon", "logaddress", "srcds" ]
 	},
 	"name": "CoreRCON",
-	"version": "1.0.0-beta1",
+	"version": "1.0.0-beta2",
 	"title": "CoreRCON",
 	"authors": [ "Scott Kaye" ],
 	"projectUrl": "https://github.com/ScottKaye/CoreRCON",

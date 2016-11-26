@@ -16,6 +16,11 @@ namespace CoreRCON.PacketFormats
 	public struct LogAddressPacket
 	{
 		/// <summary>
+		/// The body of the packet with the timestamp removed.
+		/// </summary>
+		public readonly string Body;
+
+		/// <summary>
 		/// [UNSUPPORTED] If the packet was sent with sv_logsecret set.
 		/// </summary>
 		public readonly bool HasPassword;
@@ -24,11 +29,6 @@ namespace CoreRCON.PacketFormats
 		/// The raw body of the packet.
 		/// </summary>
 		public readonly string RawBody;
-
-		/// <summary>
-		/// The body of the packet with the timestamp removed.
-		/// </summary>
-		public readonly string Body;
 
 		/// <summary>
 		/// The timestamp at which the packet was sent (not received).
@@ -62,6 +62,8 @@ namespace CoreRCON.PacketFormats
 			Body = rawBody.Substring(25);
 		}
 
+		public override string ToString() => RawBody;
+
 		/// <summary>
 		/// Converts a buffer to a packet.
 		/// </summary>
@@ -88,7 +90,5 @@ namespace CoreRCON.PacketFormats
 				return new LogAddressPacket(hasPassword, "");
 			}
 		}
-
-		public override string ToString() => RawBody;
 	}
 }

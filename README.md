@@ -20,7 +20,7 @@ using CoreRCON.Parsers.Standard;
 // ...
 
 // Connect to a server
-var rcon = new RCON(IPAddress.Parse("127.0.0.1"), 27015, "secret-password");
+var rcon = new CoreRCON.RCON(IPAddress.Parse("127.0.0.1"), 27015, "secret-password");
 
 // Send "status"
 Status status = rcon.SendCommandAsync<Status>("status");

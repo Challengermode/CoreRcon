@@ -2,22 +2,16 @@
 using CoreRCON.Parsers;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 
 namespace CoreRCON
 {
-	public partial class RCON
+	public partial class CoreRCON
 	{
 		public class LogReceiver : IDisposable
 		{
-			private List<Action<LogAddressPacket>> _logListeners { get; } = new List<Action<LogAddressPacket>>();
-			private List<ParserContainer> _parseListeners { get; } = new List<ParserContainer>();
-			private List<Action<string>> _rawListeners { get; } = new List<Action<string>>();
-			private UdpClient _udp { get; set; }
-
 			public int ResolvedPort
 			{
 				get
@@ -26,6 +20,11 @@ namespace CoreRCON
 					return ((IPEndPoint)(_udp.Client.LocalEndPoint)).Port;
 				}
 			}
+
+			private List<Action<LogAddressPacket>> _logListeners { get; } = new List<Action<LogAddressPacket>>();
+			private List<ParserContainer> _parseListeners { get; } = new List<ParserContainer>();
+			private List<Action<string>> _rawListeners { get; } = new List<Action<string>>();
+			private UdpClient _udp { get; set; }
 
 			/// <summary>
 			/// Opens a socket to receive LogAddress logs, and registers it with the server.  The IP can also be a local IP if the server is on the same network.
@@ -51,7 +50,7 @@ namespace CoreRCON
 				where T : class, IParseable, new()
 			{
 				// Instantiate the parser associated with the type parameter
-				var instance = ParserHelpers.GetParser<T>();
+				var instance = ParserHelpers.CreateParser<T>();
 
 				// Create the parser container
 				_parseListeners.Add(new ParserContainer

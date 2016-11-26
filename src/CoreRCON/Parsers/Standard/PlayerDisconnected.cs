@@ -9,8 +9,8 @@ namespace CoreRCON.Parsers.Standard
 
 	public class PlayerDisconnectedParser : DefaultParser<PlayerDisconnected>
 	{
-		private static PlayerParser playerParser { get; } = new PlayerParser();
 		public override string Pattern { get; } = $"(?<Player>{playerParser.Pattern}) disconnected";
+		private static PlayerParser playerParser { get; } = new PlayerParser();
 
 		public override PlayerDisconnected Load(GroupCollection groups)
 		{

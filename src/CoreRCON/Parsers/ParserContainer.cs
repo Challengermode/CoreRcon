@@ -7,9 +7,22 @@ namespace CoreRCON.Parsers
 	/// </summary>
 	internal class ParserContainer
 	{
+		internal Action<object> Callback { get; set; }
 		internal Func<string, bool> IsMatch { get; set; }
 		internal Func<string, object> Parse { get; set; }
-		internal Action<object> Callback { get; set; }
+
+		/// <summary>
+		/// Attempt to parse the line, and call the callback if it succeeded.
+		/// </summary>
+		/// <param name="line">Single line from the server.</param>
+		internal void TryCallback(string line)
+		{
+			object result;
+			if (TryParse(line, out result))
+			{
+				Callback(result);
+			}
+		}
 
 		/// <summary>
 		/// Attempt to parse the line into an object.
@@ -27,19 +40,6 @@ namespace CoreRCON.Parsers
 
 			result = Parse(line);
 			return result != null;
-		}
-
-		/// <summary>
-		/// Attempt to parse the line, and call the callback if it succeeded.
-		/// </summary>
-		/// <param name="line">Single line from the server.</param>
-		internal void TryCallback(string line)
-		{
-			object result;
-			if (TryParse(line, out result))
-			{
-				Callback(result);
-			}
 		}
 	}
 }

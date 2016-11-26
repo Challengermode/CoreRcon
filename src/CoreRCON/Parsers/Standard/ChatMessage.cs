@@ -2,6 +2,12 @@
 
 namespace CoreRCON.Parsers.Standard
 {
+	public enum MessageChannel
+	{
+		Team,
+		All
+	}
+
 	public class ChatMessage : IParseable
 	{
 		public MessageChannel Channel { get; set; }
@@ -11,8 +17,8 @@ namespace CoreRCON.Parsers.Standard
 
 	public class ChatMessageParser : DefaultParser<ChatMessage>
 	{
-		private static PlayerParser playerParser { get; } = new PlayerParser();
 		public override string Pattern { get; } = $"(?<Sender>{playerParser.Pattern}) (?<Channel>say_team|say) \"(?<Message>.+?)\"";
+		private static PlayerParser playerParser { get; } = new PlayerParser();
 
 		public override ChatMessage Load(GroupCollection groups)
 		{
@@ -23,11 +29,5 @@ namespace CoreRCON.Parsers.Standard
 				Channel = groups["Channel"].Value == "say" ? MessageChannel.All : MessageChannel.Team
 			};
 		}
-	}
-
-	public enum MessageChannel
-	{
-		Team,
-		All
 	}
 }

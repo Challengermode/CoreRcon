@@ -22,6 +22,12 @@ namespace CoreRCON.Parsers
 		bool IsMatch(string input);
 
 		/// <summary>
+		/// Allows the parser to be called from another parser that included this parser's pattern.
+		/// </summary>
+		/// <param name="groups">GroupCollection returned by the other parser.</param>
+		T Load(GroupCollection groups);
+
+		/// <summary>
 		/// Parses the line from the server into the desired type.
 		/// </summary>
 		/// <param name="input">Single line from the server.</param>
@@ -32,11 +38,5 @@ namespace CoreRCON.Parsers
 		/// </summary>
 		/// <param name="group">Group with .Value property to read.</param>
 		T Parse(Group group);
-
-		/// <summary>
-		/// Allows the parser to be called from another parser that included this parser's pattern.
-		/// </summary>
-		/// <param name="groups">GroupCollection returned by the other parser.</param>
-		T Load(GroupCollection groups);
 	}
 }

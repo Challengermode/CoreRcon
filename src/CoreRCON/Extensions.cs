@@ -7,7 +7,6 @@ namespace CoreRCON
 		// Trick VS into thinking this is a resolved task
 		internal static void Forget(this Task task)
 		{
-
 		}
 
 		/// <summary>

@@ -4,14 +4,14 @@ namespace CoreRCON.Parsers.Standard
 {
 	public class NameChange : IParseable
 	{
-		public Player Player { get; set; }
 		public string NewName { get; set; }
+		public Player Player { get; set; }
 	}
 
 	public class NameChangeParser : DefaultParser<NameChange>
 	{
-		private static PlayerParser playerParser { get; } = new PlayerParser();
 		public override string Pattern { get; } = $"(?<Player>{playerParser.Pattern}) changed name to \"(?<Name>.+?)\"$";
+		private static PlayerParser playerParser { get; } = new PlayerParser();
 
 		public override NameChange Load(GroupCollection groups)
 		{

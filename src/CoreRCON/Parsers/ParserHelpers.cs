@@ -1,12 +1,12 @@
 ﻿using System;
-using System.Reflection;
 using System.Linq;
+using System.Reflection;
 
 namespace CoreRCON.Parsers
 {
 	internal static class ParserHelpers
 	{
-		internal static IParser<T> GetParser<T>()
+		internal static IParser<T> CreateParser<T>()
 			where T : class, IParseable, new()
 		{
 			var implementor = new T().GetType().GetTypeInfo().Assembly.GetTypes().FirstOrDefault(t => t.GetInterfaces().Contains(typeof(IParser<T>)));

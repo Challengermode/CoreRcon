@@ -4,9 +4,9 @@ namespace CoreRCON.Parsers.Standard
 {
 	public class Player : IParseable
 	{
+		public int ClientId { get; set; }
 		public string Name { get; set; }
 		public string SteamId { get; set; }
-		public int ClientId { get; set; }
 		public string Team { get; set; }
 	}
 

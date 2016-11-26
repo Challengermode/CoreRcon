@@ -4,18 +4,18 @@ namespace CoreRCON.Parsers.Standard
 {
 	public class Status : IParseable
 	{
+		public string Account { get; set; }
+		public byte Bots { get; set; }
+		public ulong CommunityID { get; set; }
 		public string Hostname { get; set; }
-		public string Version { get; set; }
+		public byte Humans { get; set; }
 		public string LocalHost { get; set; }
+		public string Map { get; set; }
+		public byte MaxPlayers { get; set; }
 		public string PublicHost { get; set; }
 		public string SteamID { get; set; }
-		public ulong CommunityID { get; set; }
-		public string Account { get; set; }
-		public string Map { get; set; }
 		public string[] Tags { get; set; }
-		public byte Humans { get; set; }
-		public byte Bots { get; set; }
-		public byte MaxPlayers { get; set; }
+		public string Version { get; set; }
 	}
 
 	internal class StatusParser : DefaultParser<Status>

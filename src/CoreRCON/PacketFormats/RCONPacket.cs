@@ -7,9 +7,9 @@ namespace CoreRCON.PacketFormats
 {
 	public struct RCONPacket
 	{
+		public readonly string Body;
 		public readonly int Id;
 		public readonly PacketType Type;
-		public readonly string Body;
 
 		/// <summary>
 		/// Create a new packet.
@@ -24,25 +24,7 @@ namespace CoreRCON.PacketFormats
 			Body = body;
 		}
 
-		/// <summary>
-		/// Serializes a packet to a byte array for transporting over a network.  Body is serialized as UTF8.
-		/// </summary>
-		/// <returns>Byte array with each field.</returns>
-		internal byte[] ToBytes()
-		{
-			byte[] body = Encoding.UTF8.GetBytes(Body + "\0");
-			int bl = body.Length;
-
-			var packet = new MemoryStream(12 + bl);
-
-			packet.Write(BitConverter.GetBytes(9 + bl), 0, 4);
-			packet.Write(BitConverter.GetBytes(Id), 0, 4);
-			packet.Write(BitConverter.GetBytes((int)Type), 0, 4);
-			packet.Write(body, 0, bl);
-			packet.Write(new byte[] { 0 }, 0, 1);
-
-			return packet.ToArray();
-		}
+		public override string ToString() => Body;
 
 		/// <summary>
 		/// Converts a buffer to a packet.
@@ -77,6 +59,24 @@ namespace CoreRCON.PacketFormats
 			}
 		}
 
-		public override string ToString() => Body;
+		/// <summary>
+		/// Serializes a packet to a byte array for transporting over a network.  Body is serialized as UTF8.
+		/// </summary>
+		/// <returns>Byte array with each field.</returns>
+		internal byte[] ToBytes()
+		{
+			byte[] body = Encoding.UTF8.GetBytes(Body + "\0");
+			int bl = body.Length;
+
+			var packet = new MemoryStream(12 + bl);
+
+			packet.Write(BitConverter.GetBytes(9 + bl), 0, 4);
+			packet.Write(BitConverter.GetBytes(Id), 0, 4);
+			packet.Write(BitConverter.GetBytes((int)Type), 0, 4);
+			packet.Write(body, 0, bl);
+			packet.Write(new byte[] { 0 }, 0, 1);
+
+			return packet.ToArray();
+		}
 	}
 }

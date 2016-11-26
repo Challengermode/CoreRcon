@@ -10,8 +10,8 @@ namespace CoreRCON.Parsers.Standard
 
 	public class TeamChangeParser : DefaultParser<TeamChange>
 	{
-		private static PlayerParser playerParser { get; } = new PlayerParser();
 		public override string Pattern { get; } = $"(?<Player>{playerParser.Pattern}) joined team \"(?<Team>.+?)\"";
+		private static PlayerParser playerParser { get; } = new PlayerParser();
 
 		public override TeamChange Load(GroupCollection groups)
 		{
