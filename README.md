@@ -29,11 +29,11 @@ Console.WriteLine($"Connected to: {status.Hostname}");
 ```
 
 ### Listen for chat messages on the server
-This assumes you have been added to the server's `logaddress` list.
+This assumes you have been added to the server's `logaddress` list.  You do not need to make an rcon connection to receive logs from a server.
 
 The IP address supplied here must be your public/external IP.  [Find out here](http://checkip.dyndns.it/) if you do not know what your IP is, or implement this check in your own code.
 
-Similarily, the port specified must be an open port (check your router settings) and be unused.  Pass a value of `0` to use the first-available port.  Access `log.ResolvedPort` to see which port it chose.
+Similarily, the port specified must be open (check your router settings) and unused.  Pass a value of `0` to use the first-available port.  Access `log.ResolvedPort` to see which port it chose.
 ```cs
 using CoreRCON;
 using CoreRCON.Parsers.Standard;
