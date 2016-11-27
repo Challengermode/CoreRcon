@@ -189,8 +189,6 @@ namespace CoreRCON
 				}
 				catch (Exception ex)
 				{
-					Console.WriteLine(ex.StackTrace);
-					Console.WriteLine(ex.Message);
 					Dispose();
 					OnDisconnected();
 					return;
