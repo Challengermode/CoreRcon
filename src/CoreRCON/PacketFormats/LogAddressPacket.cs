@@ -48,14 +48,14 @@ namespace CoreRCON.PacketFormats
 			// Get timestamp
 			// https://developer.valvesoftware.com/wiki/HL_Log_Standard
 			var match = new Regex(@"L (\d{2}/\d{2}/\d{4} - \d{2}:\d{2}:\d{2}):").Match(rawBody);
-			if (!match.Success)
-			{
-				Timestamp = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-			}
-			else
+			if (match.Success)
 			{
 				var value = match.Groups[1].Value;
 				Timestamp = DateTime.ParseExact(value, "MM/dd/yyyy - HH:mm:ss", CultureInfo.InvariantCulture);
+			}
+			else
+			{
+				Timestamp = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 			}
 
 			// Get body without the date/time

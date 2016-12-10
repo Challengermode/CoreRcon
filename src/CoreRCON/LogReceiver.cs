@@ -2,6 +2,7 @@
 using CoreRCON.Parsers;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
@@ -23,12 +24,16 @@ namespace CoreRCON
 		private List<ParserContainer> _parseListeners { get; } = new List<ParserContainer>();
 		private List<Action<string>> _rawListeners { get; } = new List<Action<string>>();
 		private UdpClient _udp { get; set; }
+		private IPEndPoint[] _sources { get; set; }
 
 		/// <summary>
 		/// Opens a socket to receive LogAddress logs, and registers it with the server.  The IP can also be a local IP if the server is on the same network.
 		/// </summary>
-		public LogReceiver(IPAddress self, ushort port)
+		/// <param name="port">Local port to bind to.</param>
+		/// <param name="sources">Array of endpoints to accept logaddress packets from.  The server you plan on receiving packets from must be in this list.</param>
+		public LogReceiver(ushort port, params IPEndPoint[] sources)
 		{
+			_sources = sources;
 			_udp = new UdpClient(port);
 			Task.Run(() => StartListener());
 		}
@@ -40,7 +45,6 @@ namespace CoreRCON
 
 		/// <summary>
 		/// Listens on the socket for a parseable class to read.
-		/// Most useful with StartLogging(), though this will also fire when a response is received from the TCP connection.
 		/// </summary>
 		/// <typeparam name="T">Class to be parsed; must have a ParserAttribute.</typeparam>
 		/// <param name="result">Parsed class.</param>
@@ -61,27 +65,28 @@ namespace CoreRCON
 
 		/// <summary>
 		/// Listens on the socket for anything from LogAddress, returning the full packet.
-		/// StartLogging() should be run with this.
 		/// </summary>
 		/// <param name="result">Parsed LogAddress packet.</param>
-		public void ListenPacket(Action<LogAddressPacket> result)
-		{
-			_logListeners.Add(result);
-		}
+		public void ListenPacket(Action<LogAddressPacket> result) => _logListeners.Add(result);
 
 		/// <summary>
 		/// Listens on the socket for anything, returning just the body of the packet.
-		/// Most useful with StartLogging(), though this will also fire when a response is received from the TCP connection.
 		/// </summary>
 		/// <param name="result">Raw string returned by the server.</param>
-		public void ListenRaw(Action<string> result)
-		{
-			_rawListeners.Add(result);
-		}
+		public void ListenRaw(Action<string> result) => _rawListeners.Add(result);
 
-		private void CallListeners(string body)
+		private void LogAddressPacketReceived(LogAddressPacket packet)
 		{
-			if (body.Length < 1) return;
+			// Filter out checks (if there is one)
+			if (RCON.Identifier.Length > 0 && packet.Body.Contains(Constants.CHECK_STR + RCON.Identifier))
+				return;
+
+			// Call LogAddress listeners
+			foreach (var listener in _logListeners)
+				listener?.Invoke(packet);
+
+			string body = packet.Body;
+			if (body.Length == 0) return;
 
 			// Call parsers
 			foreach (var parser in _parseListeners)
@@ -92,25 +97,14 @@ namespace CoreRCON
 				listener?.Invoke(body);
 		}
 
-		private void LogAddressPacketReceived(LogAddressPacket packet)
-		{
-			// Filter out checks
-			if (packet.Body.Contains(Constants.CHECK_STR + RCON._identifier))
-				return;
-
-			// Call LogAddress listeners
-			foreach (var listener in _logListeners)
-				listener?.Invoke(packet);
-
-			// Lower priority
-			CallListeners(packet.RawBody);
-		}
-
 		private async Task StartListener()
 		{
 			while (true)
 			{
 				var result = await _udp.ReceiveAsync();
+
+				// If the packet did not come from an accepted source, throw it out
+				if (!_sources.Contains(result.RemoteEndPoint)) return;
 
 				// Parse out the LogAddress packet
 				LogAddressPacket packet = LogAddressPacket.FromBytes(result.Buffer);

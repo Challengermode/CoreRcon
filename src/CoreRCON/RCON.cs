@@ -11,7 +11,7 @@ namespace CoreRCON
 {
 	public partial class RCON : IDisposable
 	{
-		internal static string _identifier = "";
+		internal static string Identifier = "";
 		private readonly object _lock = new object();
 
 		// Allows us to keep track of when authentication succeeds, so we can block Connect from returning until it does.
@@ -184,8 +184,8 @@ namespace CoreRCON
 			{
 				try
 				{
-					_identifier = Guid.NewGuid().ToString().Substring(0, 5);
-					await SendCommandAsync(Constants.CHECK_STR + _identifier);
+					Identifier = Guid.NewGuid().ToString().Substring(0, 5);
+					await SendCommandAsync(Constants.CHECK_STR + Identifier);
 				}
 				catch (Exception ex)
 				{

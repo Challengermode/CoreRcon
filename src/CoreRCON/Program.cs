@@ -15,7 +15,7 @@ namespace CoreRCON
 			var task = Task.Run(async () =>
 			{
 				var rcon = new RCON(IPAddress.Parse("192.168.1.8"), 27015, "rcon");
-				var log = new LogReceiver(IPAddress.Parse("192.168.1.8"), 0);
+				var log = new LogReceiver(0, new IPEndPoint(IPAddress.Parse("192.168.1.8"), 27015));
 
 				// Tell the server to send logs here
 				await rcon.SendCommandAsync($"logaddress_add 192.168.1.8:{log.ResolvedPort}");

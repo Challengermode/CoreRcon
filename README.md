@@ -31,15 +31,16 @@ Console.WriteLine($"Connected to: {status.Hostname}");
 ### Listen for chat messages on the server
 This assumes you have been added to the server's `logaddress` list.  You do not need to make an rcon connection to receive logs from a server.
 
-The IP address supplied here must be your public/external IP.  [Find out here](http://checkip.dyndns.it/) if you do not know what your IP is, or implement this check in your own code.
+The port specified must be open (check your router settings) and unused.  Pass a value of `0` to use the first-available port.  Access `log.ResolvedPort` to see which port it chose.
 
-Similarily, the port specified must be open (check your router settings) and unused.  Pass a value of `0` to use the first-available port.  Access `log.ResolvedPort` to see which port it chose.
+Finally, pass an array (or list of params) of `IPEndPoints` to express which servers you would like to receive logs from.  This is because any server can send your server logs if they know which port you are listening on, as it's just UDP.
 ```cs
 using CoreRCON;
 using CoreRCON.Parsers.Standard;
 // ...
 
-var log = new LogReceiver(IPAddress.Parse("192.168.1.8"), 50000);
+// Listen on port 50000 for log packets coming from 192.168.1.8:27015
+var log = new LogReceiver(50000, new IPEndPoint(IPAddress.Parse("192.168.1.8"), 27015));
 log.Listen<ChatMessage>(chat =>
 {
 	Console.WriteLine($"Chat message: {chat.Player.Name} said {chat.Message} on channel {chat.Channel}");
