@@ -20,7 +20,7 @@ using CoreRCON.Parsers.Standard;
 // ...
 
 // Connect to a server
-var rcon = new RCON(IPAddress.Parse("127.0.0.1"), 27015, "secret-password");
+var rcon = new RCON(IPAddress.Parse("10.0.0.1"), 27015, "secret-password");
 
 // Send "status"
 Status status = await rcon.SendCommandAsync<Status>("status");
@@ -39,8 +39,8 @@ using CoreRCON;
 using CoreRCON.Parsers.Standard;
 // ...
 
-// Listen on port 50000 for log packets coming from 192.168.1.8:27015
-var log = new LogReceiver(50000, new IPEndPoint(IPAddress.Parse("192.168.1.8"), 27015));
+// Listen on port 50000 for log packets coming from 10.0.0.1:27015
+var log = new LogReceiver(50000, new IPEndPoint(IPAddress.Parse("10.0.0.1"), 27015));
 log.Listen<ChatMessage>(chat =>
 {
 	Console.WriteLine($"Chat message: {chat.Player.Name} said {chat.Message} on channel {chat.Channel}");
