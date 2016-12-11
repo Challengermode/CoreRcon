@@ -14,8 +14,17 @@ namespace CoreRCON
 		{
 			var task = Task.Run(async () =>
 			{
-				var rcon = new RCON(IPAddress.Parse("192.168.1.8"), 27015, "rcon");
-				var log = new LogReceiver(0, new IPEndPoint(IPAddress.Parse("192.168.1.8"), 27015));
+				var endpoint = new IPEndPoint(
+					IPAddress.Parse("192.168.1.8"),
+					27015
+				);
+
+				var rcon = new RCON(endpoint, "rcon");
+				var log = new LogReceiver(0, endpoint);
+				var players = await ServerQuery.Players(endpoint);
+				var info = await ServerQuery.Info(endpoint);
+
+				Console.WriteLine($"Connected to server with {players.Length} players.  Map is {info.Map} in game {info.Game} running on {info.Environment}");
 
 				// Tell the server to send logs here
 				await rcon.SendCommandAsync($"logaddress_add 192.168.1.8:{log.ResolvedPort}");

@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace CoreRCON
 {
@@ -7,6 +9,45 @@ namespace CoreRCON
 		// Trick VS into thinking this is a resolved task
 		internal static void Forget(this Task task)
 		{
+		}
+
+		/// <summary>
+		/// Step through a byte array and read a null-terminated string.
+		/// </summary>
+		/// <param name="bytes">Byte array.</param>
+		/// <param name="start">Offset to start reading from.</param>
+		/// <param name="i">Offset variable to move to the end of the string.</param>
+		/// <returns>UTF-8 encoded string.</returns>
+		public static string ReadNullTerminatedString(this byte[] bytes, int start, ref int i)
+		{
+			int end = Array.IndexOf(bytes, (byte)0, start);
+			if (end < 0) throw new ArgumentOutOfRangeException("Byte array does not appear to contain a null byte to stop reading a string at.");
+			i = end + 1;
+			return Encoding.UTF8.GetString(bytes, start, end - start);
+		}
+
+		/// <summary>
+		/// Read a short from a byte array and update the offset.
+		/// </summary>
+		/// <param name="bytes">Byte array.</param>
+		/// <param name="start">Offset to start reading from.</param>
+		/// <param name="i">Offset variable to move to the end of the string.</param>
+		public static short ReadShort(this byte[] bytes, int start, ref int i)
+		{
+			i += 2;
+			return BitConverter.ToInt16(bytes, start);
+		}
+
+		/// <summary>
+		/// Read a float from a byte array and update the offset.
+		/// </summary>
+		/// <param name="bytes">Byte array.</param>
+		/// <param name="start">Offset to start reading from.</param>
+		/// <param name="i">Offset variable to move to the end of the string.</param>
+		public static float ReadFloat(this byte[] bytes, int start, ref int i)
+		{
+			i += 4;
+			return BitConverter.ToSingle(bytes, start);
 		}
 
 		/// <summary>

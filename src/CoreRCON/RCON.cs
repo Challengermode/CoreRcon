@@ -19,13 +19,12 @@ namespace CoreRCON
 
 		private bool _connected = false;
 
-		private IPAddress _host;
+		private IPEndPoint _endpoint;
 
 		// When generating the packet ID, use a never-been-used (for automatic packets) ID.
 		private int _packetId = 1;
 
 		private string _password;
-		private ushort _port;
 		private uint _reconnectDelay;
 
 		// Map of pending command references.  These are called when a command with the matching Id (key) is received.  Commands are called only once.
@@ -39,9 +38,15 @@ namespace CoreRCON
 		/// Initialize an RCON connection and automatically call ConnectAsync().
 		/// </summary>
 		public RCON(IPAddress host, ushort port, string password, uint reconnectDelay = 30000)
+			: this(new IPEndPoint(host, port), password, reconnectDelay)
+		{ }
+
+		/// <summary>
+		/// Initialize an RCON connection and automatically call ConnectAsync().
+		/// </summary>
+		public RCON(IPEndPoint endpoint, string password, uint reconnectDelay = 30000)
 		{
-			_host = host;
-			_port = port;
+			_endpoint = endpoint;
 			_password = password;
 			_reconnectDelay = reconnectDelay;
 			ConnectAsync().Wait();
@@ -54,7 +59,7 @@ namespace CoreRCON
 		public async Task ConnectAsync()
 		{
 			_tcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-			await _tcp.ConnectAsync(_host, _port);
+			await _tcp.ConnectAsync(_endpoint);
 			_connected = true;
 
 			// Set up TCP listener

@@ -5,11 +5,11 @@ using System.Text.RegularExpressions;
 
 namespace CoreRCON.PacketFormats
 {
-	public struct RCONPacket
+	public class RCONPacket
 	{
-		public readonly string Body;
-		public readonly int Id;
-		public readonly PacketType Type;
+		public string Body { get; private set; }
+		public int Id { get; private set; }
+		public PacketType Type { get; private set; }
 
 		/// <summary>
 		/// Create a new packet.
@@ -68,15 +68,16 @@ namespace CoreRCON.PacketFormats
 			byte[] body = Encoding.UTF8.GetBytes(Body + "\0");
 			int bl = body.Length;
 
-			var packet = new MemoryStream(12 + bl);
+			using (var packet = new MemoryStream(12 + bl))
+			{
+				packet.Write(BitConverter.GetBytes(9 + bl), 0, 4);
+				packet.Write(BitConverter.GetBytes(Id), 0, 4);
+				packet.Write(BitConverter.GetBytes((int)Type), 0, 4);
+				packet.Write(body, 0, bl);
+				packet.Write(new byte[] { 0 }, 0, 1);
 
-			packet.Write(BitConverter.GetBytes(9 + bl), 0, 4);
-			packet.Write(BitConverter.GetBytes(Id), 0, 4);
-			packet.Write(BitConverter.GetBytes((int)Type), 0, 4);
-			packet.Write(body, 0, bl);
-			packet.Write(new byte[] { 0 }, 0, 1);
-
-			return packet.ToArray();
+				return packet.ToArray();
+			}
 		}
 	}
 }
