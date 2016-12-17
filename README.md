@@ -7,9 +7,9 @@ CoreRCON is an implementation of Valve's [Source RCON Protocol](https://develope
 
 ## Installation
 CoreRCON is available on NuGet, and can be installed with:
-```
-Install-Package CoreRCON
-```
+<pre>
+Install-Package <a href="https://www.nuget.org/packages/CoreRCON">CoreRCON<a>
+</pre>
 
 ## Quick Start
 ### Connect to an RCON server and send a command
