@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -26,6 +27,30 @@ namespace CoreRCON
 			return Encoding.UTF8.GetString(bytes, start, end - start);
 		}
 
+        public static List<string> ReadNullTerminatedStringArray(this byte[] bytes, int start, ref int i)
+        {
+            var result = new List<string>();
+            var byteindex = start;
+            while (bytes[byteindex] != 0x00)
+            {
+                result.Add(ReadNullTerminatedString(bytes, byteindex, ref byteindex));
+            }
+            i = byteindex + 1;
+            return result;
+        }
+
+        public static Dictionary<string, string> ReadNullTerminatedStringDictionary(this byte[] bytes, int start, ref int i)
+        {
+            var result = new Dictionary<string, string>();
+            var byteindex = start;
+            while (bytes[byteindex] != 0x00)
+            {
+                result.Add(ReadNullTerminatedString(bytes, byteindex, ref byteindex), ReadNullTerminatedString(bytes, byteindex, ref byteindex));
+            }
+            i = byteindex + 1;
+            return result;
+        }
+
 		/// <summary>
 		/// Read a short from a byte array and update the offset.
 		/// </summary>
@@ -38,13 +63,13 @@ namespace CoreRCON
 			return BitConverter.ToInt16(bytes, start);
 		}
 
-		/// <summary>
-		/// Read a float from a byte array and update the offset.
-		/// </summary>
-		/// <param name="bytes">Byte array.</param>
-		/// <param name="start">Offset to start reading from.</param>
-		/// <param name="i">Offset variable to move to the end of the string.</param>
-		public static float ReadFloat(this byte[] bytes, int start, ref int i)
+        /// <summary>
+        /// Read a float from a byte array and update the offset.
+        /// </summary>
+        /// <param name="bytes">Byte array.</param>
+        /// <param name="start">Offset to start reading from.</param>
+        /// <param name="i">Offset variable to move to the end of the string.</param>
+        public static float ReadFloat(this byte[] bytes, int start, ref int i)
 		{
 			i += 4;
 			return BitConverter.ToSingle(bytes, start);
