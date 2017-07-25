@@ -3,7 +3,12 @@
 
 [![](https://readthedocs.org/projects/corercon/badge/?version=latest)](http://corercon.readthedocs.io/en/latest/)
 
-CoreRCON is an implementation of Valve's [Source RCON Protocol](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol) on .NET Core.  It currently supports connecting to a server, sending commands and receiving their output, and receiving logs from SRCDS' `logaddress` functionality.
+CoreRCON is an implementation of the RCON protocol on .NET Core.  It currently supports connecting to a server, sending commands and receiving their output, and receiving logs from `logaddress`.
+
+### Supports:
+* **Team Fortress 2** - (see [Source RCON Protocol](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol))
+* **Minecraft** - Thanks to [CodingContraption](https://github.com/ScottKaye/CoreRCON/pull/7)
+* Potentially other Source-based RCON implementations (untested)
 
 ## Installation
 CoreRCON is available on NuGet, and can be installed with:
@@ -46,3 +51,8 @@ log.Listen<ChatMessage>(chat =>
 	Console.WriteLine($"Chat message: {chat.Player.Name} said {chat.Message} on channel {chat.Channel}");
 });
 ```
+
+## Changelog
+### Version 3.0.0
+* [Supports Minecraft](https://github.com/ScottKaye/CoreRCON/pull/7)
+* Some [`ServerQuery`](https://github.com/ScottKaye/CoreRCON/blob/master/src/CoreRCON/ServerQuery.cs#L17) methods now require a server type to differentiate between Source and Minecraft
