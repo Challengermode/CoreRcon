@@ -8,9 +8,6 @@ namespace CoreRCON.PacketFormats
 {
     public class MinecraftQueryInfo : IQueryInfo
     {
-        private static Dictionary<string, string> _keyValues;
-        private static List<string> _players;
-
         public string MessageOfTheDay { get; private set; }
         public string Gametype { get; private set; }
         public string GameId { get; private set; }

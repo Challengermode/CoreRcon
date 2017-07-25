@@ -39,7 +39,7 @@ namespace CoreRCON
 
         static ServerQuery()
 		{
-			_client = new UdpClient(0);
+			_client = new UdpClient();
 		}
 
 		/// <summary>

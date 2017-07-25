@@ -7,7 +7,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CoreRCON\CoreRCON.csproj" />
-    <ProjectReference Include="..\src\CoreRCON\CoreRCON.csproj" />
   </ItemGroup>
 
 </Project>
