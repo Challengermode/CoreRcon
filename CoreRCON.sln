@@ -10,6 +10,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TF2Example", "src\TF2Example\TF2Example.csproj", "{4157A4E6-B76E-4BC5-BE32-2171EA3A0BE1}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCExample", "src\MCExample\MCExample.csproj", "{A7392D55-A455-4415-AD20-9298C5CFE7CB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{CDFCA475-8F06-424B-9CF7-7D1E5D21F6D5} = {CDFCA475-8F06-424B-9CF7-7D1E5D21F6D5}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

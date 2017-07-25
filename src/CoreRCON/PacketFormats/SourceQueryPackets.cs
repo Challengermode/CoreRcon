@@ -26,8 +26,8 @@
 		Private = 0x1
 	}
 
-	public class ServerQueryInfo
-	{
+	public class SourceQueryInfo : IQueryInfo
+    {
 		public byte Bots { get; private set; }
 		public ServerEnvironment Environment { get; private set; }
 		public string Folder { get; private set; }
@@ -42,10 +42,10 @@
 		public ServerVAC VAC { get; private set; }
 		public ServerVisibility Visibility { get; private set; }
 
-		public static ServerQueryInfo FromBytes(byte[] buffer)
+		public static SourceQueryInfo FromBytes(byte[] buffer)
 		{
 			int i = 6;
-			return new ServerQueryInfo
+			return new SourceQueryInfo
 			{
 				ProtocolVersion = buffer[4],
 				Name = buffer.ReadNullTerminatedString(i, ref i),
