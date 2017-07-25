@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.16
+VisualStudioVersion = 15.0.26430.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{600446C9-F807-4B19-807C-DDDE625CE558}"
 EndProject
@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CoreRCON", "src\CoreRCON\Co
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TF2Example", "src\TF2Example\TF2Example.csproj", "{4157A4E6-B76E-4BC5-BE32-2171EA3A0BE1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MCExample", "src\MCExample\MCExample.csproj", "{A7392D55-A455-4415-AD20-9298C5CFE7CB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MCExample", "src\MCExample\MCExample.csproj", "{A7392D55-A455-4415-AD20-9298C5CFE7CB}"
 	ProjectSection(ProjectDependencies) = postProject
 		{CDFCA475-8F06-424B-9CF7-7D1E5D21F6D5} = {CDFCA475-8F06-424B-9CF7-7D1E5D21F6D5}
 	EndProjectSection
