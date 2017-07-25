@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <Description>A .NET Core implementation of Valve's RCON spec and SRCDS's logaddress function.</Description>
+    <AssemblyTitle>CoreRCON</AssemblyTitle>
+    <VersionPrefix>2.0.0</VersionPrefix>
+    <Authors>Scott Kaye</Authors>
+    <TargetFramework>netstandard1.6</TargetFramework>
+    <AssemblyName>CoreRCON</AssemblyName>
+    <OutputType>Library</OutputType>
+    <PackageId>CoreRCON</PackageId>
+    <PackageTags>valve;rcon;logaddress;srcds</PackageTags>
+    <PackageIconUrl>https://cdn.rawgit.com/ScottKaye/CoreRCON/master/logo.png</PackageIconUrl>
+    <PackageProjectUrl>https://github.com/ScottKaye/CoreRCON</PackageProjectUrl>
+    <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/ScottKaye/CoreRCON</RepositoryUrl>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+  </PropertyGroup>
+
+  <Target Name="PostcompileScript" AfterTargets="Build" Condition=" '$(IsCrossTargetingBuild)' != 'true' ">
+    <Exec Command="dotnet pack --no-build --configuration $(Configuration)" />
+  </Target>
+
+</Project>
