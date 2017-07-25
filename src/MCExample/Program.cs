@@ -44,7 +44,15 @@ namespace MCExample
             }
 
             Console.WriteLine("---------------------------------");
-            Console.Read();
+            Console.WriteLine("\nTesting RCON:");
+            var rcon = new RCON(IPAddress.Parse("127.0.0.1"), 25575, "kJGSDO7242hSA*D0sad0");
+            var cmd = await rcon.SendCommandAsync("help");
+            Console.Write(cmd + "\n\nCommand: ");
+            while (true)
+            {
+                var command = Console.ReadLine();
+                Console.Write(await rcon.SendCommandAsync(command) + "\n\nCommand: ");
+            }
         }
     }
 }
