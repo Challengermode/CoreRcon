@@ -3,6 +3,7 @@ using CoreRCON;
 using System;
 using System.Net;
 using System.Threading.Tasks;
+using CoreRCON.PacketFormats;
 
 namespace TF2Example
 {
@@ -15,15 +16,16 @@ namespace TF2Example
         {
             var task = Task.Run(async () =>
             {
+                var ip = "192.168.1.8"; // "162.248.93.211"; // 
                 var endpoint = new IPEndPoint(
-                    IPAddress.Parse("192.168.1.8"), // 162.248.93.211
+                    IPAddress.Parse(ip), 
                     27015
                 );
                 
                 var rcon = new RCON(endpoint, "rcon");
                 var log = new LogReceiver(0, endpoint);
                 var players = await ServerQuery.Players(endpoint);
-                var info = await ServerQuery.Info(endpoint);
+                var info = await ServerQuery.Info(endpoint, ServerQuery.ServerType.Source) as SourceQueryInfo;
 
                 Console.WriteLine($"Connected to server with {players.Length} players.  Map is {info.Map} in game {info.Game} running on {info.Environment}");
                 
