@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using CoreRCON;
 using System.Threading.Tasks;
 using System.Net;
@@ -24,7 +24,7 @@ namespace MCExample
             Console.WriteLine("Info has been fetched:");
             Console.WriteLine("---------------------------------");
 
-            // Too lazy too type all infividual properties.
+            // Too lazy too type all individual properties.
             IList<PropertyInfo> props = new List<PropertyInfo>(typeof(MinecraftQueryInfo).GetProperties());
             foreach (var prop in props)
             {
