@@ -8,6 +8,7 @@ CoreRCON is an implementation of the RCON protocol on .NET Core.  It currently s
 ### Supports:
 * **Team Fortress 2** - (see [Source RCON Protocol](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol))
 * **Minecraft** - Thanks to [CodingContraption](https://github.com/ScottKaye/CoreRCON/pull/7)
+* **ARK: Survival Evolved** - Confirmed by [tgardner851](https://github.com/ScottKaye/CoreRCON/issues/10)
 * Potentially other Source-based RCON implementations (untested)
 
 ## Installation
