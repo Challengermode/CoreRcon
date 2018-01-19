@@ -53,6 +53,12 @@ log.Listen<ChatMessage>(chat =>
 });
 ```
 
+## Troubleshooting
+### Can't install via NuGet
+> "Could not install package 'CoreRCON X.X.X'. You are trying to install this package into a project that targets '.NETFramework,Version=vy.y.y', but the package does not contain any assembly references or content files that are compatible with that framework. For more information, contact the package author."
+
+If you are seeing an error similar to this, try changing your project's targeted .NET Framework version [[#11]](https://github.com/ScottKaye/CoreRCON/issues/11).  If you are using Visual Studio 2015, the minimum resolvable framework version is **4.7**.  Visual Studio 2017 has improved support for .NET Core packages, allowing CoreRCON to resolve for versions as low as **4.6.1**.
+
 ## Changelog
 ### Version 3.0.0
 * [Supports Minecraft](https://github.com/ScottKaye/CoreRCON/pull/7)
