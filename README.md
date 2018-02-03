@@ -1,3 +1,8 @@
+## Unmaintained
+I am no longer maintaining CoreRCON.  I will still review and accept pull requests if somebody takes the time to make one, but since I am not involved in any of the games this library was written for, I am also not fit for the job.  If you are interested in maintaining this repo, please contact me.
+
+Still, give it a fair shot, it might still work for you!
+
 # CoreRCON
 <img src="https://cdn.rawgit.com/ScottKaye/CoreRCON/master/logo.png" align="right">
 
