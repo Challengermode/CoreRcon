@@ -21,8 +21,20 @@
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <LangVersion>7.2</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <LangVersion>7.2</LangVersion>
+  </PropertyGroup>
+
   <Target Name="PostcompileScript" AfterTargets="Build" Condition=" '$(IsCrossTargetingBuild)' != 'true' ">
     <Exec Command="dotnet pack --no-build --configuration $(Configuration)" />
   </Target>
+
+  <ItemGroup>
+    <PackageReference Include="System.IO.Pipelines" Version="4.5.0" />
+  </ItemGroup>
 
 </Project>
