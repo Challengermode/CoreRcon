@@ -100,7 +100,7 @@ namespace CoreRCON
 
         async Task FillPipeAsync(Socket socket, PipeWriter writer)
         {
-            const int minimumBufferSize = 14;
+            const int minimumBufferSize = Constants.MIN_PACKET_SIZE;
 
             while (true)
             {
@@ -119,7 +119,7 @@ namespace CoreRCON
                 catch (Exception ex)
                 {
                     Console.WriteLine(ex);
-                    throw (ex);
+                    break;
                 }
 
                 // Make the data available to the PipeReader
@@ -147,8 +147,13 @@ namespace CoreRCON
 
                 if (buffer.Length < 4)
                 {
+                    if (result.IsCompleted)
+                    {
+                        break;
+                    }
                     reader.AdvanceTo(position, buffer.End);
                     Console.WriteLine("Header not complete");
+                    continue;
                     // Complete header not yet recived
                 }
                 int size = BitConverter.ToInt32(buffer.Slice(position, 4).ToArray(), 0);
@@ -184,11 +189,13 @@ namespace CoreRCON
                 // Tell the PipeReader how much of the buffer we have consumed
 
                 // Stop reading if there's no more data coming
-                if (result.IsCompleted)
+                if (buffer.IsEmpty && result.IsCompleted)
                 {
-                    break;
+                    break; // exit loop
                 }
+
             }
+
 
             // Mark the PipeReader as complete
             reader.Complete();
@@ -206,7 +213,7 @@ namespace CoreRCON
         /// </summary>
         /// <typeparam name="T">Type to parse the command as.</typeparam>
         /// <param name="command">Command to send to the server.</param>
-        public async Task<T> SendCommandAsync<T>(string command)
+        public Task<T> SendCommandAsync<T>(string command)
             where T : class, IParseable, new()
         {
             Monitor.Enter(_lock);
@@ -227,8 +234,8 @@ namespace CoreRCON
 
             Monitor.Exit(_lock);
 
-            await SendPacketAsync(packet);
-            return await source.Task;
+            SendPacketAsync(packet);
+            return source.Task;
 
         }
 
@@ -236,7 +243,7 @@ namespace CoreRCON
         /// Send a command to the server, and wait for the response before proceeding.  R
         /// </summary>
         /// <param name="command">Command to send to the server.</param>
-        public async Task<string> SendCommandAsync(string command)
+        public Task<string> SendCommandAsync(string command)
         {
             Monitor.Enter(_lock);
             var source = new TaskCompletionSource<string>();
@@ -244,8 +251,8 @@ namespace CoreRCON
             var packet = new RCONPacket(_packetId, PacketType.ExecCommand, command);
             Monitor.Exit(_lock);
 
-            await SendPacketAsync(packet);
-            return await source.Task;
+            SendPacketAsync(packet);
+            return source.Task;
         }
 
         private void RCONPacketReceived(RCONPacket packet)
@@ -254,7 +261,8 @@ namespace CoreRCON
             Action<string> action;
             if (_pendingCommands.TryGetValue(packet.Id, out action))
             {
-                action?.Invoke(packet.Body);
+                //Make sure that we don't yeild to the main thread. 
+                Task.Run(() => { action?.Invoke(packet.Body); }).Forget();
                 _pendingCommands.Remove(packet.Id);
             }
         }
@@ -275,7 +283,7 @@ namespace CoreRCON
         /// Polls the server to check if RCON is still authenticated.  Will still throw if the password was changed elsewhere.
         /// </summary>
         /// <param name="delay">Time in milliseconds to wait between polls.</param>
-        private async void WatchForDisconnection(uint delay)
+        private async Task WatchForDisconnection(uint delay)
         {
             int checkedDelay = checked((int)delay);
 
