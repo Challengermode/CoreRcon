@@ -32,6 +32,7 @@ namespace CoreRCON
 
         // Map of pending command references.  These are called when a command with the matching Id (key) is received.  Commands are called only once.
         private Dictionary<int, Action<string>> _pendingCommands { get; } = new Dictionary<int, Action<string>>();
+        private Dictionary<int, string> _incomingBuffer { get; } = new Dictionary<int, string>();
 
         private Socket _tcp { get; set; }
 
@@ -262,8 +263,17 @@ namespace CoreRCON
             if (_pendingCommands.TryGetValue(packet.Id, out action))
             {
                 //Make sure that we don't yeild to the main thread. 
-                Task.Run(() => { action?.Invoke(packet.Body); }).Forget();
-                _pendingCommands.Remove(packet.Id);
+                string body;
+                _incomingBuffer.TryGetValue(packet.Id, out body);
+                if (packet.Body == "")
+                {
+                    Task.Run(() => { action?.Invoke(body); }).Forget();
+                    _pendingCommands.Remove(packet.Id);
+                }
+                else
+                {
+                    _incomingBuffer[packet.Id] = body + packet.Body;
+                }
             }
         }
 
@@ -275,6 +285,11 @@ namespace CoreRCON
         {
             if (!_connected) throw new InvalidOperationException("Connection is closed.");
             await _tcp.SendAsync(new ArraySegment<byte>(packet.ToBytes()), SocketFlags.None);
+            if (!packet.Body.StartsWith(Constants.CHECK_STR))
+            {
+                await _tcp.SendAsync(new ArraySegment<byte>(new RCONPacket(packet.Id, PacketType.Response, "").ToBytes()), SocketFlags.None);
+            }
+
         }
 
 
