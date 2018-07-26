@@ -73,7 +73,7 @@ namespace CoreRCON
             await _tcp.ConnectAsync(_endpoint);
             _connected = true;
             Pipe pipe = new Pipe();
-            Task writing = FillPipeAsync(_tcp, pipe.Writer);
+            Task writing = FillPipeAsync(pipe.Writer);
             Task reading = ReadPipeAsync(pipe.Reader);
 
             // Wait for successful authentication
@@ -86,7 +86,12 @@ namespace CoreRCON
             );
         }
 
-        async Task FillPipeAsync(Socket socket, PipeWriter writer)
+        /// <summary>
+        /// Fill pipe with data when availble in the socket
+        /// </summary>
+        /// <param name="writer"></param>
+        /// <returns>Producer Task</returns>
+        async Task FillPipeAsync(PipeWriter writer)
         {
             const int minimumBufferSize = Constants.MIN_PACKET_SIZE;
 
@@ -96,7 +101,7 @@ namespace CoreRCON
                 Memory<byte> memory = writer.GetMemory(minimumBufferSize);
                 try
                 {
-                    int bytesRead = await socket.ReceiveAsync(memory, SocketFlags.None);
+                    int bytesRead = await _tcp.ReceiveAsync(memory, SocketFlags.None);
                     if (bytesRead == 0)
                     {
                         break;
@@ -124,6 +129,11 @@ namespace CoreRCON
 
         }
 
+        /// <summary>
+        /// Read data from pipeline when avalible, constructing new RCON packets 
+        /// </summary>
+        /// <param name="reader"></param>
+        /// <returns>Consumer Task</returns>
         async Task ReadPipeAsync(PipeReader reader)
         {
             byte[] byteArr = new byte[Constants.MAX_PACKET_SIZE];
@@ -245,6 +255,11 @@ namespace CoreRCON
             throw new AggregateException(new[] { source.Task, _networkConsumerTask }.Select(t => t.Exception));
         }
 
+        /// <summary>
+        /// Merges RCON packet bodies and resolves the waiting task
+        /// with the full body when full response has been recived. 
+        /// </summary>
+        /// <param name="packet"> Newly received packet </param>
         private void RCONPacketReceived(RCONPacket packet)
         {
             // Call pending result and remove from map
@@ -303,6 +318,7 @@ namespace CoreRCON
                 }
                 catch (Exception ex)
                 {
+                    //Fail waiting messages
                     foreach (var taskPair in _pendingCommands)
                     {
                         taskPair.Value.SetException(ex);
