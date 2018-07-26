@@ -4,6 +4,7 @@ using System;
 using System.Buffers;
 using System.Collections.Generic;
 using System.IO.Pipelines;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
@@ -31,29 +32,29 @@ namespace CoreRCON
         private uint _reconnectDelay;
 
         // Map of pending command references.  These are called when a command with the matching Id (key) is received.  Commands are called only once.
-        private Dictionary<int, Action<string>> _pendingCommands { get; } = new Dictionary<int, Action<string>>();
+        private Dictionary<int, TaskCompletionSource<String>> _pendingCommands { get; } = new Dictionary<int, TaskCompletionSource<String>>();
         private Dictionary<int, string> _incomingBuffer { get; } = new Dictionary<int, string>();
 
         private Socket _tcp { get; set; }
+        private Task _networkConsumerTask;
 
         public event Action OnDisconnected;
 
         /// <summary>
-        /// Initialize an RCON connection and automatically call ConnectAsync().
+        /// Initialize an RCON
         /// </summary>
         public RCON(IPAddress host, ushort port, string password, uint reconnectDelay = 30000)
             : this(new IPEndPoint(host, port), password, reconnectDelay)
         { }
 
         /// <summary>
-        /// Initialize an RCON connection and automatically call ConnectAsync().
+        /// Initialize an RCON 
         /// </summary>
         public RCON(IPEndPoint endpoint, string password, uint reconnectDelay = 30000)
         {
             _endpoint = endpoint;
             _password = password;
             _reconnectDelay = reconnectDelay;
-            ConnectAsync().Wait();
         }
 
         /// <summary>
@@ -62,7 +63,13 @@ namespace CoreRCON
         /// <returns>Awaitable which will complete when a successful connection is made and authentication is successful.</returns>
         public async Task ConnectAsync()
         {
+            if (_connected)
+            {
+                return;
+            }
             _tcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            //_tcp.ReceiveTimeout = 2000;
+            //_tcp.SendTimeout = 2000;
             await _tcp.ConnectAsync(_endpoint);
             _connected = true;
             Pipe pipe = new Pipe();
@@ -72,22 +79,27 @@ namespace CoreRCON
             // Wait for successful authentication
             _authenticationTask = new TaskCompletionSource<bool>();
             await SendPacketAsync(new RCONPacket(0, PacketType.Auth, _password));
+            _networkConsumerTask = Task.WhenAll(writing, reading);
             await _authenticationTask.Task;
 
-            Task.Run(() => WatchForDisconnection(_reconnectDelay)).Forget();
+            Task.Factory.StartNew(() =>
+            {
+                WatchForDisconnection(_reconnectDelay);
+            }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+
+
         }
 
+        //Helper methods for pipeline network io
         public static Task<int> ReceiveAsync(Socket socket, Memory<byte> memory, SocketFlags socketFlags)
         {
             var arraySegment = GetArray(memory);
             return SocketTaskExtensions.ReceiveAsync(socket, arraySegment, socketFlags);
         }
-
         private static ArraySegment<byte> GetArray(Memory<byte> memory)
         {
             return GetArray((ReadOnlyMemory<byte>)memory);
         }
-
         private static ArraySegment<byte> GetArray(ReadOnlyMemory<byte> memory)
         {
             if (!MemoryMarshal.TryGetArray(memory, out var result))
@@ -214,64 +226,68 @@ namespace CoreRCON
         /// </summary>
         /// <typeparam name="T">Type to parse the command as.</typeparam>
         /// <param name="command">Command to send to the server.</param>
-        public Task<T> SendCommandAsync<T>(string command)
+        public async Task<T> SendCommandAsync<T>(string command)
             where T : class, IParseable, new()
         {
-            Monitor.Enter(_lock);
+            string response = await SendCommandAsync(command);
             var source = new TaskCompletionSource<T>();
             var instance = ParserHelpers.CreateParser<T>();
-
             var container = new ParserContainer
             {
                 IsMatch = line => instance.IsMatch(line),
                 Parse = line => instance.Parse(line),
-                Callback = parsed => source.SetResult((T)parsed)
             };
 
-            _pendingCommands.Add(++_packetId, container.TryCallback);
-            var packet = new RCONPacket(_packetId, PacketType.ExecCommand, command);
-            Console.Write(packet.Id);
-            Console.WriteLine(packet.Body);
 
-            Monitor.Exit(_lock);
-
-            SendPacketAsync(packet);
-            return source.Task;
-
+            object parsed;
+            if (!container.TryParse(response, out parsed))
+            {
+                throw new FormatException("Failed to parse server response");
+            }
+            return (T)parsed;
         }
 
         /// <summary>
         /// Send a command to the server, and wait for the response before proceeding.  R
         /// </summary>
         /// <param name="command">Command to send to the server.</param>
-        public Task<string> SendCommandAsync(string command)
+        public async Task<string> SendCommandAsync(string command)
         {
             Monitor.Enter(_lock);
             var source = new TaskCompletionSource<string>();
-            _pendingCommands.Add(++_packetId, source.SetResult);
+            _pendingCommands.Add(++_packetId, source);
             var packet = new RCONPacket(_packetId, PacketType.ExecCommand, command);
             Monitor.Exit(_lock);
 
-            SendPacketAsync(packet);
-            return source.Task;
+            await SendPacketAsync(packet);
+            await Task.WhenAny(source.Task, _networkConsumerTask).ConfigureAwait(false);
+            if (source.Task.IsCompleted)
+            {
+                Console.WriteLine($"recived response for {command} : {source.Task.Result}");
+                return source.Task.Result;
+            }
+
+            throw new AggregateException(new[] { source.Task, _networkConsumerTask }.Select(t => t.Exception));
         }
 
         private void RCONPacketReceived(RCONPacket packet)
         {
             // Call pending result and remove from map
-            Action<string> action;
-            if (_pendingCommands.TryGetValue(packet.Id, out action))
+            TaskCompletionSource<string> taskSource;
+            if (_pendingCommands.TryGetValue(packet.Id, out taskSource))
             {
-                //Make sure that we don't yeild to the main thread. 
+                //Read any previous messgaes 
                 string body;
                 _incomingBuffer.TryGetValue(packet.Id, out body);
                 if (packet.Body == "")
                 {
-                    Task.Run(() => { action?.Invoke(body); }).Forget();
+                    //Avoid yeilding
+                    taskSource.SetResult(body);
                     _pendingCommands.Remove(packet.Id);
                 }
                 else
                 {
+                    //Append to previous messages
                     _incomingBuffer[packet.Id] = body + packet.Body;
                 }
             }
@@ -285,8 +301,9 @@ namespace CoreRCON
         {
             if (!_connected) throw new InvalidOperationException("Connection is closed.");
             await _tcp.SendAsync(new ArraySegment<byte>(packet.ToBytes()), SocketFlags.None);
-            if (!packet.Body.StartsWith(Constants.CHECK_STR))
+            if (packet.Type == PacketType.ExecCommand && !packet.Body.StartsWith(Constants.CHECK_STR))
             {
+                //Send a extra packet to find end of large packets
                 await _tcp.SendAsync(new ArraySegment<byte>(new RCONPacket(packet.Id, PacketType.Response, "").ToBytes()), SocketFlags.None);
             }
 
@@ -311,6 +328,10 @@ namespace CoreRCON
                 }
                 catch (Exception ex)
                 {
+                    foreach (var taskPair in _pendingCommands)
+                    {
+                        taskPair.Value.SetException(ex);
+                    }
                     Dispose();
                     OnDisconnected();
                     return;
