@@ -81,35 +81,10 @@ namespace CoreRCON
             await SendPacketAsync(new RCONPacket(0, PacketType.Auth, _password));
             _networkConsumerTask = Task.WhenAll(writing, reading);
             await _authenticationTask.Task;
-
-            Task.Factory.StartNew(() =>
-            {
-                WatchForDisconnection(_reconnectDelay);
-            }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
-
-
+            Task.Run(() =>
+                 WatchForDisconnection(_reconnectDelay).ConfigureAwait(false)
+            );
         }
-
-        //Helper methods for pipeline network io
-        public static Task<int> ReceiveAsync(Socket socket, Memory<byte> memory, SocketFlags socketFlags)
-        {
-            var arraySegment = GetArray(memory);
-            return SocketTaskExtensions.ReceiveAsync(socket, arraySegment, socketFlags);
-        }
-        private static ArraySegment<byte> GetArray(Memory<byte> memory)
-        {
-            return GetArray((ReadOnlyMemory<byte>)memory);
-        }
-        private static ArraySegment<byte> GetArray(ReadOnlyMemory<byte> memory)
-        {
-            if (!MemoryMarshal.TryGetArray(memory, out var result))
-            {
-                throw new InvalidOperationException("Buffer backed by array was expected");
-            }
-
-            return result;
-        }
-
 
         async Task FillPipeAsync(Socket socket, PipeWriter writer)
         {
@@ -121,7 +96,7 @@ namespace CoreRCON
                 Memory<byte> memory = writer.GetMemory(minimumBufferSize);
                 try
                 {
-                    int bytesRead = await ReceiveAsync(socket, memory, SocketFlags.None);
+                    int bytesRead = await socket.ReceiveAsync(memory, SocketFlags.None);
                     if (bytesRead == 0)
                     {
                         break;
