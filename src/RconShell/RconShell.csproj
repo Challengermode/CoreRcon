@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\CoreRCON\CoreRCON.csproj" />
+    <ProjectReference Include="..\CoreRCON\CoreRCON.csproj" />
   </ItemGroup>
 
 </Project>
