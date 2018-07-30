@@ -95,7 +95,7 @@ namespace CoreRCON
         {
             const int minimumBufferSize = Constants.MIN_PACKET_SIZE;
 
-            while (true)
+            while (_connected)
             {
                 // Allocate at least 14 bytes from the PipeWriter
                 Memory<byte> memory = writer.GetMemory(minimumBufferSize);
@@ -168,7 +168,9 @@ namespace CoreRCON
                         // Failed auth responses return with an ID of -1
                         if (packet.Id == -1)
                         {
-                            throw new AuthenticationException($"Authentication failed for {_tcp.RemoteEndPoint}.");
+                            _authenticationTask.SetException(
+                                new AuthenticationException($"Authentication failed for {_tcp.RemoteEndPoint}.")
+                                );
                         }
                         // Tell Connect that authentication succeeded
                         _authenticationTask.SetResult(true);
@@ -271,7 +273,7 @@ namespace CoreRCON
                 if (packet.Body == "")
                 {
                     //Avoid yeilding
-                    taskSource.SetResult(body);
+                    taskSource.SetResult(body ?? string.Empty);
                     _pendingCommands.Remove(packet.Id);
                 }
                 else
@@ -308,7 +310,7 @@ namespace CoreRCON
         {
             int checkedDelay = checked((int)delay);
 
-            while (true)
+            while (_connected)
             {
                 try
                 {
