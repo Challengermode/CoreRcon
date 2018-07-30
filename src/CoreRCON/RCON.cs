@@ -141,7 +141,7 @@ namespace CoreRCON
             {
                 ReadResult result = await reader.ReadAsync();
                 ReadOnlySequence<byte> buffer = result.Buffer;
-                SequencePosition position = buffer.Start;
+                SequencePosition packetStart = buffer.Start;
 
                 if (buffer.Length < 4)
                 {
@@ -149,16 +149,18 @@ namespace CoreRCON
                     {
                         break;
                     }
-                    reader.AdvanceTo(position, buffer.End);
+                    reader.AdvanceTo(packetStart, buffer.End);
                     Console.WriteLine("Header not complete");
                     continue;
                     // Complete header not yet recived
                 }
-                int size = BitConverter.ToInt32(buffer.Slice(position, 4).ToArray(), 0);
+                int size = BitConverter.ToInt32(buffer.Slice(packetStart, 4).ToArray(), 0);
                 Console.WriteLine($"Reciving {size} bytes of packet");
                 if (buffer.Length >= size + 4)
                 {
-                    byteArr = buffer.Slice(position, size + 4).ToArray();
+                    // Get packet end posisition 
+                    SequencePosition packetEnd = buffer.GetPosition(size + 4, packetStart);
+                    byteArr = buffer.Slice(packetStart, packetEnd).ToArray();
                     RCONPacket packet = RCONPacket.FromBytes(byteArr);
 
                     if (packet.Type == PacketType.AuthResponse)
@@ -175,13 +177,11 @@ namespace CoreRCON
                     // Forward rcon packet to handler
                     RCONPacketReceived(packet);
 
-                    // Advance buffer position
-                    position = buffer.GetPosition(size + 4, position);
-                    reader.AdvanceTo(position);
+                    reader.AdvanceTo(packetEnd);
                 }
                 else
                 {
-                    reader.AdvanceTo(position, buffer.End);
+                    reader.AdvanceTo(packetStart, buffer.End);
                 }
 
                 // Tell the PipeReader how much of the buffer we have consumed
@@ -243,7 +243,6 @@ namespace CoreRCON
             _pendingCommands.Add(++_packetId, source);
             var packet = new RCONPacket(_packetId, PacketType.ExecCommand, command);
             Monitor.Exit(_lock);
-
             await SendPacketAsync(packet);
             await Task.WhenAny(source.Task, _networkConsumerTask).ConfigureAwait(false);
             if (source.Task.IsCompleted)
