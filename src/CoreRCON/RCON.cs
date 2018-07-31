@@ -68,8 +68,9 @@ namespace CoreRCON
                 return;
             }
             _tcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            //_tcp.ReceiveTimeout = 2000;
-            //_tcp.SendTimeout = 2000;
+            //_tcp.ReceiveTimeout = 10000;
+            //_tcp.SendTimeout = 10000;
+            //_tcp.NoDelay = true;
             await _tcp.ConnectAsync(_endpoint);
             _connected = true;
             Pipe pipe = new Pipe();
@@ -111,8 +112,8 @@ namespace CoreRCON
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex);
-                    break;
+                    await writer.FlushAsync();
+                    throw ex;
                 }
 
                 // Make the data available to the PipeReader
@@ -150,7 +151,6 @@ namespace CoreRCON
                         break;
                     }
                     reader.AdvanceTo(packetStart, buffer.End);
-                    Console.WriteLine("Header not complete");
                     continue;
                     // Complete header not yet recived
                 }
@@ -246,10 +246,9 @@ namespace CoreRCON
             var packet = new RCONPacket(_packetId, PacketType.ExecCommand, command);
             Monitor.Exit(_lock);
             await SendPacketAsync(packet);
-            await Task.WhenAny(source.Task, _networkConsumerTask).ConfigureAwait(false);
+            await Task.WhenAny(source.Task, _networkConsumerTask);
             if (source.Task.IsCompleted)
             {
-                Console.WriteLine($"recived response for {command} : {source.Task.Result}");
                 return source.Task.Result;
             }
 
