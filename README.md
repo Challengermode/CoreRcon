@@ -1,7 +1,7 @@
-## Unmaintained
-I am no longer maintaining CoreRCON.  I will still review and accept pull requests if somebody takes the time to make one, but since I am not involved in any of the games this library was written for, I am also not fit for the job.  If you are interested in maintaining this repo, please contact me.
+## Fork
 
-Still, give it a fair shot, it might still work for you!
+This fork rewrites the RCON code to use Pipline networking to receive RCON packets. 
+It also has support for multi packet RCON responses. 
 
 # CoreRCON
 <img src="https://cdn.rawgit.com/ScottKaye/CoreRCON/master/logo.png" align="right">
@@ -11,16 +11,9 @@ Still, give it a fair shot, it might still work for you!
 CoreRCON is an implementation of the RCON protocol on .NET Core.  It currently supports connecting to a server, sending commands and receiving their output, and receiving logs from `logaddress`.
 
 ### Supports:
-* **Team Fortress 2** - (see [Source RCON Protocol](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol))
-* **Minecraft** - Thanks to [CodingContraption](https://github.com/ScottKaye/CoreRCON/pull/7)
-* **ARK: Survival Evolved** - Confirmed by [tgardner851](https://github.com/ScottKaye/CoreRCON/issues/10)
-* Potentially other Source-based RCON implementations (untested)
+* **CS:GO** - (see [Source RCON Protocol](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol))
+* Potentially **Minecraft**, **ARK** and Source-based RCON implementations (untested)
 
-## Installation
-CoreRCON is available on NuGet, and can be installed with:
-<pre>
-Install-Package <a href="https://www.nuget.org/packages/CoreRCON">CoreRCON<a>
-</pre>
 
 ## Quick Start
 ### Connect to an RCON server and send a command
@@ -32,6 +25,7 @@ using CoreRCON.Parsers.Standard;
 
 // Connect to a server
 var rcon = new RCON(IPAddress.Parse("10.0.0.1"), 27015, "secret-password");
+await rcon.ConnectAsync();
 
 // Send "status"
 Status status = await rcon.SendCommandAsync<Status>("status");
@@ -58,6 +52,9 @@ log.Listen<ChatMessage>(chat =>
 });
 ```
 
+##Todo
+[] Add an option to disable multi packet response for games without support for it. 
+
 ## Troubleshooting
 ### Can't install via NuGet
 > "Could not install package 'CoreRCON X.X.X'. You are trying to install this package into a project that targets '.NETFramework,Version=vy.y.y', but the package does not contain any assembly references or content files that are compatible with that framework. For more information, contact the package author."
@@ -65,6 +62,9 @@ log.Listen<ChatMessage>(chat =>
 If you are seeing an error similar to this, try changing your project's targeted .NET Framework version [[#11]](https://github.com/ScottKaye/CoreRCON/issues/11).  If you are using Visual Studio 2015, the minimum resolvable framework version is **4.7**.  Visual Studio 2017 has improved support for .NET Core packages, allowing CoreRCON to resolve for versions as low as **4.6.1**.
 
 ## Changelog
+### Version 4.0.0
+* Rewrote RCON client to use Pipline networking
+* Add support for multi packet responses using [Koraktors trick](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol#Multiple-packet_Responses)
 ### Version 3.0.0
 * [Supports Minecraft](https://github.com/ScottKaye/CoreRCON/pull/7)
 * Some [`ServerQuery`](https://github.com/ScottKaye/CoreRCON/blob/master/src/CoreRCON/ServerQuery.cs#L17) methods now require a server type to differentiate between Source and Minecraft
