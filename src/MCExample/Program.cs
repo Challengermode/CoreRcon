@@ -46,6 +46,7 @@ namespace MCExample
             Console.WriteLine("---------------------------------");
             Console.WriteLine("\nTesting RCON:");
             var rcon = new RCON(IPAddress.Parse("127.0.0.1"), 25575, "kJGSDO7242hSA*D0sad0");
+            await rcon.ConnectAsync();
             var cmd = await rcon.SendCommandAsync("help");
             Console.Write(cmd + "\n\nCommand: ");
             while (true)

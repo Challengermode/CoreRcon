@@ -18,17 +18,18 @@ namespace TF2Example
             {
                 var ip = "192.168.1.8"; // "162.248.93.211"; // 
                 var endpoint = new IPEndPoint(
-                    IPAddress.Parse(ip), 
+                    IPAddress.Parse(ip),
                     27015
                 );
-                
+
                 var rcon = new RCON(endpoint, "rcon");
+                await rcon.ConnectAsync();
                 var log = new LogReceiver(0, endpoint);
                 var players = await ServerQuery.Players(endpoint);
                 var info = await ServerQuery.Info(endpoint, ServerQuery.ServerType.Source) as SourceQueryInfo;
 
                 Console.WriteLine($"Connected to server with {players.Length} players.  Map is {info.Map} in game {info.Game} running on {info.Environment}");
-                
+
                 // Tell the server to send logs here
                 await rcon.SendCommandAsync($"logaddress_add 192.168.1.8:{log.ResolvedPort}");
 
