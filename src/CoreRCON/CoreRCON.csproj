@@ -1,19 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>A .NET Core implementation of the RCON spec.  Supports Source and Minecraft.</Description>
+    <Description>A .NET Core implementation of the RCON spec.</Description>
     <AssemblyTitle>CoreRCON</AssemblyTitle>
     <VersionPrefix>2.0.0</VersionPrefix>
-    <Authors>Scott Kaye</Authors>
+    <Authors>Alexander Westberg-Bladh Scott Kaye</Authors>
     <TargetFramework>netstandard1.6</TargetFramework>
     <AssemblyName>CoreRCON</AssemblyName>
     <OutputType>Library</OutputType>
     <PackageId>CoreRCON</PackageId>
     <PackageTags>valve;rcon;logaddress;srcds;minecraft</PackageTags>
-    <PackageIconUrl>https://cdn.rawgit.com/ScottKaye/CoreRCON/master/logo.png</PackageIconUrl>
-    <PackageProjectUrl>https://github.com/ScottKaye/CoreRCON</PackageProjectUrl>
+    <PackageIconUrl>https://cdn.rawgit.com/Challengermode/CoreRcon/master/logo.png</PackageIconUrl>
+    <PackageProjectUrl>https://github.com/Challengermode/CoreRcon</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
-    <RepositoryUrl>https://github.com/ScottKaye/CoreRCON</RepositoryUrl>
+    <RepositoryUrl>https://github.com/Challengermode/CoreRcon</RepositoryUrl>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
