@@ -47,7 +47,7 @@ namespace CoreRCON
         /// </summary>
         /// <param name="host">Server adress</param>
         /// <param name="port">Server port</param>
-        public RCON(IPAddress host, ushort port, string password, uint beaconIntervall = 30000, uint tcpTimeout = 0, bool sourceMultiPacketSupport = false)
+        public RCON(IPAddress host, ushort port, string password, uint beaconIntervall = 30000, uint tcpTimeout = 10000, bool sourceMultiPacketSupport = false)
             : this(new IPEndPoint(host, port), password, beaconIntervall, tcpTimeout, sourceMultiPacketSupport)
         { }
 
