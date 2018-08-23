@@ -30,7 +30,7 @@ namespace CoreRCON
 
         private string _password;
         private uint _beaconIntervall;
-        private uint _timeout;
+        private int _timeout;
         private bool _multiPacket;
 
         // Map of pending command references.  These are called when a command with the matching Id (key) is received.  Commands are called only once.
@@ -57,7 +57,7 @@ namespace CoreRCON
             _endpoint = endpoint;
             _password = password;
             _beaconIntervall = beaconIntervall;
-            _timeout = tcpTimeout;
+            _timeout = (int)tcpTimeout;
             _multiPacket = sourceMultiPacketSupport;
         }
 
