@@ -42,6 +42,8 @@ namespace CoreRCON.Tests
         [ExpectedException(typeof(AuthenticationException))]
         public async Task testBadAuthAsync()
         {
+            //Warning ! This test can ban your ip in the server if sv_rcon_maxfailure is set to 0
+            //Use removeip to unban your ip (Default ban period is 60 min)
             rconClient.Dispose();
             rconClient = new RCON(_ip, _port, "wrong PW");
             await rconClient.ConnectAsync();
@@ -65,6 +67,8 @@ namespace CoreRCON.Tests
         [TestMethod]
         public async Task testLongResponseAsync()
         {
+            rconClient.Dispose();
+            rconClient = new RCON(_ip, _port, _password, 0, 10000, true); //Enable multi packetsupport
             string response = await rconClient.SendCommandAsync("cvarList");
             Assert.IsTrue(response.EndsWith("total convars/concommands"));
         }
