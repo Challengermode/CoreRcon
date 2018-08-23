@@ -20,7 +20,7 @@ namespace CoreRCON.Tests
         RCON rconClient;
         //Connection settings for server
         private readonly IPAddress _ip = IPAddress.Parse("127.0.0.1");
-        private readonly ushort _port = 27807;
+        private readonly ushort _port = 27015;
         private readonly string _password = "rcon";
 
         [TestCleanup]
@@ -69,6 +69,7 @@ namespace CoreRCON.Tests
         {
             rconClient.Dispose();
             rconClient = new RCON(_ip, _port, _password, 0, 10000, true); //Enable multi packetsupport
+            await rconClient.ConnectAsync();
             string response = await rconClient.SendCommandAsync("cvarList");
             Assert.IsTrue(response.EndsWith("total convars/concommands"));
         }
