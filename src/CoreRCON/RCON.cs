@@ -30,6 +30,7 @@ namespace CoreRCON
 
         private string _password;
         private uint _reconnectDelay;
+        private bool _multiPacket;
 
         // Map of pending command references.  These are called when a command with the matching Id (key) is received.  Commands are called only once.
         private Dictionary<int, TaskCompletionSource<String>> _pendingCommands { get; } = new Dictionary<int, TaskCompletionSource<String>>();
@@ -43,18 +44,19 @@ namespace CoreRCON
         /// <summary>
         /// Initialize an RCON
         /// </summary>
-        public RCON(IPAddress host, ushort port, string password, uint reconnectDelay = 30000)
-            : this(new IPEndPoint(host, port), password, reconnectDelay)
+        public RCON(IPAddress host, ushort port, string password, uint reconnectDelay = 30000, bool sourceMultiPacketSupport = false)
+            : this(new IPEndPoint(host, port), password, reconnectDelay, sourceMultiPacketSupport)
         { }
 
         /// <summary>
         /// Initialize an RCON 
         /// </summary>
-        public RCON(IPEndPoint endpoint, string password, uint reconnectDelay = 30000)
+        public RCON(IPEndPoint endpoint, string password, uint reconnectDelay = 30000, bool sourceMultiPacketSupport = false)
         {
             _endpoint = endpoint;
             _password = password;
             _reconnectDelay = reconnectDelay;
+            _multiPacket = sourceMultiPacketSupport;
         }
 
         /// <summary>
@@ -266,19 +268,29 @@ namespace CoreRCON
             TaskCompletionSource<string> taskSource;
             if (_pendingCommands.TryGetValue(packet.Id, out taskSource))
             {
-                //Read any previous messgaes 
-                string body;
-                _incomingBuffer.TryGetValue(packet.Id, out body);
-                if (packet.Body == "")
+                if (_multiPacket)
                 {
-                    //Avoid yeilding
-                    taskSource.SetResult(body ?? string.Empty);
-                    _pendingCommands.Remove(packet.Id);
+                    //Read any previous messgaes 
+                    string body;
+                    _incomingBuffer.TryGetValue(packet.Id, out body);
+
+                    if (packet.Body == "")
+                    {
+                        //Avoid yeilding
+                        taskSource.SetResult(body ?? string.Empty);
+                        _pendingCommands.Remove(packet.Id);
+                    }
+                    else
+                    {
+                        //Append to previous messages
+                        _incomingBuffer[packet.Id] = body + packet.Body;
+                    }
                 }
                 else
                 {
-                    //Append to previous messages
-                    _incomingBuffer[packet.Id] = body + packet.Body;
+                    //Avoid yeilding
+                    taskSource.SetResult(packet.Body);
+                    _pendingCommands.Remove(packet.Id);
                 }
             }
         }
@@ -291,7 +303,7 @@ namespace CoreRCON
         {
             if (!_connected) throw new InvalidOperationException("Connection is closed.");
             await _tcp.SendAsync(new ArraySegment<byte>(packet.ToBytes()), SocketFlags.None);
-            if (packet.Type == PacketType.ExecCommand && !packet.Body.StartsWith(Constants.CHECK_STR))
+            if (packet.Type == PacketType.ExecCommand && !packet.Body.StartsWith(Constants.CHECK_STR) && _multiPacket)
             {
                 //Send a extra packet to find end of large packets
                 await _tcp.SendAsync(new ArraySegment<byte>(new RCONPacket(packet.Id, PacketType.Response, "").ToBytes()), SocketFlags.None);
