@@ -227,6 +227,8 @@ namespace CoreRCON
         /// </summary>
         /// <typeparam name="T">Type to parse the command as.</typeparam>
         /// <param name="command">Command to send to the server.</param>
+        /// <exception cref = "System.FormatException" > Unable to parse response </ exception >
+        /// <exception cref = "System.AggregateException" >Connection exceptions</ exception >
         public async Task<T> SendCommandAsync<T>(string command)
             where T : class, IParseable, new()
         {
@@ -252,6 +254,7 @@ namespace CoreRCON
         /// Send a command to the server, and wait for the response before proceeding.  R
         /// </summary>
         /// <param name="command">Command to send to the server.</param>
+        /// <exception cref = "System.AggregateException" >Connection exceptions</ exception >
         public async Task<string> SendCommandAsync(string command)
         {
             Monitor.Enter(_lock);
