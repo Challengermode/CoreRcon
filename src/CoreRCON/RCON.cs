@@ -292,7 +292,7 @@ namespace CoreRCON
                     if (packet.Body == "")
                     {
                         //Avoid yeilding
-                        taskSource.SetResult(body ?? string.Empty);
+                        Task.Run(() => taskSource.SetResult(body ?? string.Empty));
                         _pendingCommands.Remove(packet.Id);
                     }
                     else
@@ -304,7 +304,7 @@ namespace CoreRCON
                 else
                 {
                     //Avoid yeilding
-                    taskSource.SetResult(packet.Body);
+                    Task.Run(() => taskSource.SetResult(packet.Body));
                     _pendingCommands.Remove(packet.Id);
                 }
             }
