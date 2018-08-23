@@ -93,9 +93,12 @@ namespace CoreRCON
             await SendPacketAsync(new RCONPacket(0, PacketType.Auth, _password));
             _networkConsumerTask = Task.WhenAll(writing, reading);
             await _authenticationTask.Task;
-            Task.Run(() =>
-                 WatchForDisconnection(_beaconIntervall).ConfigureAwait(false)
-            );
+            if (_beaconIntervall != 0)
+            {
+                Task.Run(() =>
+                     WatchForDisconnection(_beaconIntervall).ConfigureAwait(false)
+                );
+            }
         }
 
         /// <summary>
