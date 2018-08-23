@@ -29,7 +29,7 @@ namespace CoreRCON
         private int _packetId = 1;
 
         private string _password;
-        private uint _reconnectDelay;
+        private uint _beaconIntervall;
         private bool _multiPacket;
 
         // Map of pending command references.  These are called when a command with the matching Id (key) is received.  Commands are called only once.
@@ -44,18 +44,18 @@ namespace CoreRCON
         /// <summary>
         /// Initialize an RCON
         /// </summary>
-        public RCON(IPAddress host, ushort port, string password, uint reconnectDelay = 30000, bool sourceMultiPacketSupport = false)
-            : this(new IPEndPoint(host, port), password, reconnectDelay, sourceMultiPacketSupport)
+        public RCON(IPAddress host, ushort port, string password, uint beaconIntervall = 30000, bool sourceMultiPacketSupport = false)
+            : this(new IPEndPoint(host, port), password, beaconIntervall, sourceMultiPacketSupport)
         { }
 
         /// <summary>
         /// Initialize an RCON 
         /// </summary>
-        public RCON(IPEndPoint endpoint, string password, uint reconnectDelay = 30000, bool sourceMultiPacketSupport = false)
+        public RCON(IPEndPoint endpoint, string password, uint beaconIntervall = 30000, bool sourceMultiPacketSupport = false)
         {
             _endpoint = endpoint;
             _password = password;
-            _reconnectDelay = reconnectDelay;
+            _beaconIntervall = beaconIntervall;
             _multiPacket = sourceMultiPacketSupport;
         }
 
@@ -85,7 +85,7 @@ namespace CoreRCON
             _networkConsumerTask = Task.WhenAll(writing, reading);
             await _authenticationTask.Task;
             Task.Run(() =>
-                 WatchForDisconnection(_reconnectDelay).ConfigureAwait(false)
+                 WatchForDisconnection(_beaconIntervall).ConfigureAwait(false)
             );
         }
 
