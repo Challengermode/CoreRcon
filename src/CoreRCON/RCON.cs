@@ -30,6 +30,7 @@ namespace CoreRCON
 
         private string _password;
         private uint _beaconIntervall;
+        private uint _timeout;
         private bool _multiPacket;
 
         // Map of pending command references.  These are called when a command with the matching Id (key) is received.  Commands are called only once.
@@ -44,18 +45,19 @@ namespace CoreRCON
         /// <summary>
         /// Initialize an RCON
         /// </summary>
-        public RCON(IPAddress host, ushort port, string password, uint beaconIntervall = 30000, bool sourceMultiPacketSupport = false)
+        public RCON(IPAddress host, ushort port, string password, uint beaconIntervall = 30000, uint tcpTimeout = 0, bool sourceMultiPacketSupport = false)
             : this(new IPEndPoint(host, port), password, beaconIntervall, sourceMultiPacketSupport)
         { }
 
         /// <summary>
         /// Initialize an RCON 
         /// </summary>
-        public RCON(IPEndPoint endpoint, string password, uint beaconIntervall = 30000, bool sourceMultiPacketSupport = false)
+        public RCON(IPEndPoint endpoint, string password, uint beaconIntervall = 30000, uint tcpTimeout = 0, bool sourceMultiPacketSupport = false)
         {
             _endpoint = endpoint;
             _password = password;
             _beaconIntervall = beaconIntervall;
+            _timeout = tcpTimeout;
             _multiPacket = sourceMultiPacketSupport;
         }
 
@@ -70,8 +72,8 @@ namespace CoreRCON
                 return;
             }
             _tcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            //_tcp.ReceiveTimeout = 10000;
-            //_tcp.SendTimeout = 10000;
+            _tcp.ReceiveTimeout = _timeout;
+            _tcp.SendTimeout = _timeout;
             //_tcp.NoDelay = true;
             await _tcp.ConnectAsync(_endpoint);
             _connected = true;
