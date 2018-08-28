@@ -14,7 +14,7 @@ using System.Linq;
 namespace CoreRCON.Tests
 {
     [TestClass]
-    public class UnitTest
+    public class RconTest
     {
 
         RCON rconClient;
