@@ -11,7 +11,6 @@ namespace CoreRCON.Parsers.Csgo
 
     public class FragAssistParser : DefaultParser<FragAssist>
     {
-        //Todo parse position (square bracket contetnt)
         public override string Pattern { get; } = $"(?<Assister>{playerParser.Pattern}) assisted killing (?<Killed>{playerParser.Pattern})?";
         private static PlayerParser playerParser { get; } = new PlayerParser();
 
