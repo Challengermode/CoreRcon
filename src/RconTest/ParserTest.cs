@@ -54,6 +54,14 @@ namespace CoreRCON.Tests
             Assert.IsFalse(frag.Headshot);
             Assert.AreEqual(frag.Weapon, weapon);
         }
+
+        [TestMethod]
+        public void testAssist()
+        {
+            string test = "L 08/29/2018 - 16:59:36: \"Bot<10><STEAM_1:0:12354210><CT>\" assisted killing \"Bot<11><STEAM_1:0:123371565><TERRORIST>\"";
+            FragAssistParser parser = new FragAssistParser();
+            Assert.IsTrue(parser.IsMatch(test));
+        }
     }
 }
 
