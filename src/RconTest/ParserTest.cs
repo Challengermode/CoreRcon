@@ -62,6 +62,32 @@ namespace CoreRCON.Tests
             FragAssistParser parser = new FragAssistParser();
             Assert.IsTrue(parser.IsMatch(test));
         }
+
+        [TestMethod]
+        public void testDamageEvent()
+        {
+            int dmg = 110;
+            int dmg_armor = 0;
+            int health = 0;
+            int armor = 80;
+            string hitgroup = "head";
+            string test = "L 08/29/2018 - 16:59:36: \"Prince<12><STEAM_1:1:177338101><CT>\" [2264 19 128] attacked \"Son.Gohan<11><STEAM_1:0:120371565><TERRORIST>\" " +
+                "[1938 -198 256] with \"hkp2000\" " +
+                $"(damage \"{dmg}\") " +
+                $"(damage_armor \"{dmg_armor}\") " +
+                $"(health \"{health}\") " +
+                $"(armor \"{armor}\") " +
+                $"(hitgroup \"{hitgroup}\")";
+
+            DamageEventParser parser = new DamageEventParser();
+            Assert.IsTrue(parser.IsMatch(test));
+            DamageEvent e = parser.Parse(test);
+            Assert.AreEqual(dmg, e.Damage);
+            Assert.AreEqual(dmg_armor, e.ArmorDamage);
+            Assert.AreEqual(health, e.PostHealth);
+            Assert.AreEqual(armor, e.PostArmor);
+            Assert.AreEqual(hitgroup, e.HitLocation);
+        }
     }
 }
 
