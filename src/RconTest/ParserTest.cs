@@ -24,6 +24,20 @@ namespace CoreRCON.Tests
             Assert.AreEqual(ctRounds, score.CTScore);
             Assert.AreEqual(tRounds, score.TScore);
         }
+
+
+        [TestMethod]
+        public void testDisconnectParser()
+        {
+            string reason = "test123   (oj)";
+            string withReason = $"12:00 junk: \"Xavier<2><BOT><TERRORIST>\" disconnected (reason \"{reason}\")";
+            string noREason = $"12:00 junk: \"Xavier<2><BOT><TERRORIST>\" disconnected";
+            PlayerDisconnectedParser parser = new PlayerDisconnectedParser();
+            Assert.IsTrue(parser.IsMatch(withReason));
+            Assert.IsTrue(parser.IsMatch(noREason));
+            PlayerDisconnected disconnection = parser.Parse(withReason);
+            Assert.AreEqual(reason, disconnection.Reason);
+        }
     }
 }
 
