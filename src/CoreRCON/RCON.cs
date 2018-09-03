@@ -127,6 +127,7 @@ namespace CoreRCON
                 catch (Exception ex)
                 {
                     await writer.FlushAsync();
+                    writer.Complete();
                     throw ex;
                 }
 
@@ -269,7 +270,7 @@ namespace CoreRCON
                 return source.Task.Result;
             }
 
-            throw new AggregateException(new[] { source.Task, _networkConsumerTask }.Select(t => t.Exception));
+            throw new SocketException();
         }
 
         /// <summary>

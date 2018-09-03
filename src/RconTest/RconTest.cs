@@ -5,6 +5,7 @@ using System.Net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 
 /*
  * Run tests against a running RCON server
@@ -32,7 +33,7 @@ namespace CoreRCON.Tests
         [TestInitialize]
         public async Task testInitAsync()
         {
-            rconClient = new RCON(_ip, _port, _password);
+            rconClient = new RCON(_ip, _port, _password, 0, 1000, false);
             await rconClient.ConnectAsync();
 
         }
@@ -100,6 +101,18 @@ namespace CoreRCON.Tests
             //Parallel.ForEach(tasks, task => task.Start());
             await Task.WhenAll(tasks);
             Console.Out.Flush();
+        }
+
+
+
+        [TestMethod, Timeout(30000)]
+        [ExpectedException(typeof(SocketException))]
+        public async Task testNetworkCut()
+        {
+            //1. Put a brakepoint on the line bellow
+            //2. When the debugger breaks quickly unplug the ethernet 
+            //3. Continue
+            string response = await rconClient.SendCommandAsync("say hi");
         }
 
     }
