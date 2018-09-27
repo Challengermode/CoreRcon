@@ -170,7 +170,6 @@ namespace CoreRCON
                     // Complete header not yet recived
                 }
                 int size = BitConverter.ToInt32(buffer.Slice(packetStart, 4).ToArray(), 0);
-                Console.WriteLine($"Reciving {size} bytes of packet");
                 if (buffer.Length >= size + 4)
                 {
                     // Get packet end posisition 
