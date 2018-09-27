@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using CoreRCON;
 using CoreRCON.PacketFormats;
@@ -16,6 +17,29 @@ namespace RconShell
 {
     class Program
     {
+        static RCON rcon;
+        const int ThreadCount = 100;
+        const int MessageCount = 100;
+        static int completed = 0;
+
+        public static async void ConcurrentTestAsync()
+        {
+            Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} started");
+            var context = SynchronizationContext.Current;
+            if (context != null)
+                Console.WriteLine($"Context {context.ToString()}");
+            for (int i = 0; i< MessageCount; i++)
+            {
+                string response = await rcon.SendCommandAsync($"say {i}");
+                if(!String.Equals($"Console: {i}", response))
+                {
+                    Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} failed on iteration {i} response = {response}");
+                }
+            }
+            Interlocked.Increment(ref completed);
+            Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} finished");
+        }
+
         static async Task Main(string[] args)
         {
             String ip = "192.168.2.224";
@@ -26,7 +50,7 @@ namespace RconShell
                 port
             );
 
-            var rcon = new RCON(endpoint, password, 1000);
+            rcon = new RCON(endpoint, password, 1000);
             await rcon.ConnectAsync();
             bool connected = true;
             rcon.OnDisconnected += () =>
@@ -38,6 +62,23 @@ namespace RconShell
             while (connected)
             {
                 String command = Console.ReadLine();
+                if(command == "conctest")
+                {
+                    completed = 0;
+                    List<Thread> threadList = new List<Thread>(ThreadCount);
+                    for (int i = 0; i<ThreadCount; i++)
+                    {
+                        ThreadStart childref = new ThreadStart(ConcurrentTestAsync);
+                        Thread childThread = new Thread(childref);
+                        childThread.Start();
+                        threadList.Add(childThread);
+                    }
+                    while(completed < ThreadCount)
+                    {
+                        await Task.Delay(1);
+                    }
+                    continue;
+                }
                 String response = await rcon.SendCommandAsync(command);
                 Console.WriteLine(response);
             }
