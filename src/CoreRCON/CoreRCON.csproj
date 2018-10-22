@@ -9,7 +9,7 @@
     <AssemblyName>CoreRCON</AssemblyName>
     <OutputType>Library</OutputType>
     <PackageId>CoreRCON</PackageId>
-    <PackageTags>valve;rcon;logaddress;srcds;minecraft</PackageTags>
+    <PackageTags>valve;rcon;logaddress;srcds;csgo;minecraft</PackageTags>
     <PackageIconUrl>https://cdn.rawgit.com/Challengermode/CoreRcon/master/logo.png</PackageIconUrl>
     <PackageProjectUrl>https://github.com/Challengermode/CoreRcon</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
@@ -17,10 +17,10 @@
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <Version>4.3.5</Version>
+    <Version>4.3.6</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>4.3.5.0</AssemblyVersion>
-    <FileVersion>4.3.5.0</FileVersion>
+    <AssemblyVersion>4.3.6.0</AssemblyVersion>
+    <FileVersion>4.3.6.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
