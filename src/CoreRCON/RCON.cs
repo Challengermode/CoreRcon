@@ -233,6 +233,7 @@ namespace CoreRCON
             where T : class, IParseable, new()
         {
             string response = await SendCommandAsync(command);
+            // Se comment about TaskCreationOptions.RunContinuationsAsynchronously in SendComandAsync<String>
             var source = new TaskCompletionSource<T>();
             var instance = ParserHelpers.CreateParser<T>();
             var container = new ParserContainer
@@ -258,6 +259,10 @@ namespace CoreRCON
         public async Task<string> SendCommandAsync(string command)
         {
             Monitor.Enter(_lock);
+            // This TaskCompletion source could be initialized with TaskCreationOptions.RunContinuationsAsynchronously
+            // However we this library is designed to be able to run without its own thread
+            // Read more about this option here:
+            // https://github.com/davidfowl/AspNetCoreDiagnosticScenarios/blob/master/AsyncGuidance.md#always-create-taskcompletionsourcet-with-taskcreationoptionsruncontinuationsasynchronously
             var source = new TaskCompletionSource<string>();
             _pendingCommands.Add(++_packetId, source);
             var packet = new RCONPacket(_packetId, PacketType.ExecCommand, command);
