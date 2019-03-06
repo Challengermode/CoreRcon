@@ -76,6 +76,18 @@ namespace CoreRCON.Tests
             Assert.Equals(t_score, score.TScore);
         }
 
+        [TestMethod]
+        public void testTeamSide()
+        {
+            string team = "Gamma Squad";
+            string side = "CT";
+            string test = $"Team playing \"{side}\": {team}";
+            TeamSideParser parser = new TeamSideParser();
+            Assert.IsTrue(parser.IsMatch(test));
+            TeamSide data = parser.Parse(test);
+            Assert.Equals(team, data.Team);
+            Assert.Equals(side, data.CurentSide);
+        }
 
         [TestMethod]
         public void testDamageEvent()
