@@ -64,6 +64,20 @@ namespace CoreRCON.Tests
         }
 
         [TestMethod]
+        public void testGameOver()
+        {
+            int ct_score = 1;
+            int t_score = 16;
+            string test = $"Game Over: competitive mg_active de_cache score {ct_score}:{t_score} after 23 min";
+            GameOverScoreParser parser = new GameOverScoreParser();
+            Assert.IsTrue(parser.IsMatch(test));
+            GameOverScore score = parser.Parse(test);
+            Assert.Equals(ct_score, score.CTScore);
+            Assert.Equals(t_score, score.TScore);
+        }
+
+
+        [TestMethod]
         public void testDamageEvent()
         {
             int dmg = 110;
