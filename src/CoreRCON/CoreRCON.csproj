@@ -17,10 +17,10 @@
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <Version>4.3.8</Version>
+    <Version>4.3.9</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>4.3.8.0</AssemblyVersion>
-    <FileVersion>4.3.8.0</FileVersion>
+    <AssemblyVersion>4.3.9.0</AssemblyVersion>
+    <FileVersion>4.3.9.0</FileVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
