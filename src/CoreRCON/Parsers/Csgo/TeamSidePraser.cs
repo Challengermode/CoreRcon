@@ -6,7 +6,7 @@ namespace CoreRCON.Parsers.Csgo
     public class TeamSide : IParseable
     {
         public string Team { get; set; }
-        public int CurentSide { get; set; }
+        public string CurentSide { get; set; }
     }
 
     public class TeamSideParser : DefaultParser<TeamSide>
@@ -18,7 +18,7 @@ namespace CoreRCON.Parsers.Csgo
             return new TeamSide
             {
                 Team = groups["team"].Value,
-                CurentSide = int.Parse(groups["side"].Value)
+                CurentSide = groups["side"].Value
             };
         }
     }
