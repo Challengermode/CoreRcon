@@ -13,7 +13,6 @@ namespace CoreRCON.Parsers.Csgo
     public class RoundEndScoreParser : DefaultParser<RoundEndScore>
     {
         public override string Pattern { get; } = @"Team ""(?<winning_team>.+?)"" triggered ""SFUI_Notice_.+?_Win"" \(CT ""(?<ct_score>\d+)""\) \(T ""(?<t_score>\d+)""\)";
-        private static PlayerParser playerParser { get; } = new PlayerParser();
 
         public override RoundEndScore Load(GroupCollection groups)
         {
