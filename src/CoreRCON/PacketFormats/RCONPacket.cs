@@ -48,7 +48,7 @@ namespace CoreRCON.PacketFormats
             try
             {
                 // Force string to \r\n line endings
-                char[] rawBody = Encoding.UTF8.GetChars(buffer, 12, size - 10);
+                char[] rawBody = Encoding.ASCII.GetChars(buffer, 12, size - 10);
                 string body = new string(rawBody, 0, size - 10).TrimEnd();
                 body = Regex.Replace(body, @"\r\n|\n\r|\n|\r", "\r\n");
                 return new RCONPacket(id, type, body);
@@ -66,7 +66,7 @@ namespace CoreRCON.PacketFormats
         /// <returns>Byte array with each field.</returns>
         internal byte[] ToBytes()
         {
-            byte[] body = Encoding.UTF8.GetBytes(Body + "\0");
+            byte[] body = Encoding.ASCII.GetBytes(Body + "\0");
             int bl = body.Length;
 
             using (var packet = new MemoryStream(12 + bl))
