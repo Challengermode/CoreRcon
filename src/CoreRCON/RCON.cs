@@ -274,6 +274,7 @@ namespace CoreRCON
                 return source.Task.Result;
             }
 
+            //Todo: XXX dont throw here, throw in consumer / producer and rethrow here.
             throw new SocketException();
         }
 
