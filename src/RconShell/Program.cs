@@ -31,7 +31,7 @@ namespace RconShell
             for (int i = 0; i< MessageCount; i++)
             {
                 string response = await rcon.SendCommandAsync($"say {i}");
-                if(!String.Equals($"Console: {i}", response))
+                if(response.EndsWith($"Console: {i}"))
                 {
                     Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} failed on iteration {i} response = {response}");
                 }

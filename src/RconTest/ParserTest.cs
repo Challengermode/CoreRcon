@@ -72,8 +72,8 @@ namespace CoreRCON.Tests
             GameOverScoreParser parser = new GameOverScoreParser();
             Assert.IsTrue(parser.IsMatch(test));
             GameOverScore score = parser.Parse(test);
-            Assert.Equals(ct_score, score.CTScore);
-            Assert.Equals(t_score, score.TScore);
+            Assert.AreEqual(ct_score, score.CTScore);
+            Assert.AreEqual(t_score, score.TScore);
         }
 
         [TestMethod]
@@ -85,8 +85,8 @@ namespace CoreRCON.Tests
             TeamSideParser parser = new TeamSideParser();
             Assert.IsTrue(parser.IsMatch(test));
             TeamSide data = parser.Parse(test);
-            Assert.Equals(team, data.Team);
-            Assert.Equals(side, data.CurentSide);
+            Assert.AreEqual(team, data.Team);
+            Assert.AreEqual(side, data.CurentSide);
         }
 
         [TestMethod]
