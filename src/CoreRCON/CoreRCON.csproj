@@ -17,10 +17,10 @@
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <Version>4.4.1</Version>
+    <Version>4.5.0</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>4.4.1.0</AssemblyVersion>
-    <FileVersion>4.4.1.0</FileVersion>
+    <AssemblyVersion>4.5.0.0</AssemblyVersion>
+    <FileVersion>4.5.0.0</FileVersion>
     <PackageReleaseNotes>Rewrote RCON client to use Pipline networking
 Add support for multi packet responses using Koraktors trick
 ConnectAsync now has to be called after construction (!)
