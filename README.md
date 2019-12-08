@@ -59,8 +59,8 @@ If you are seeing an error similar to this, try changing your project's targeted
 
 ## Changelog
 ### Version 4.0.0
-* Rewrote RCON client to use Pipline networking
-* Add support for multi packet responses using [Koraktors trick](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol#Multiple-packet_Responses)
+* Rewrote RCON client to use Pipeline networking
+* Add support for  multi-packet responses using [Koraktors trick](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol#Multiple-packet_Responses)
 * ConnectAsync now has to be called after construction. 
 ### Version 3.0.0
 * [Supports Minecraft](https://github.com/ScottKaye/CoreRCON/pull/7)

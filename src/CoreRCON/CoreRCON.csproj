@@ -17,12 +17,12 @@
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <Version>4.5.0</Version>
+    <Version>4.5.1</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>4.5.0.0</AssemblyVersion>
-    <FileVersion>4.5.0.0</FileVersion>
-    <PackageReleaseNotes>Rewrote RCON client to use Pipline networking
-Add support for multi packet responses using Koraktors trick
+    <AssemblyVersion>4.5.1.0</AssemblyVersion>
+    <FileVersion>4.5.1.0</FileVersion>
+    <PackageReleaseNotes>Rewrote RCON client to use Pipeline networking
+Add support for multi-packet responses using Koraktors trick
 ConnectAsync now has to be called after construction (!)
 New maintainer see: https://github.com/ScottKaye/CoreRCON/issues/17</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
