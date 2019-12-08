@@ -18,8 +18,8 @@ namespace RconShell
     class Program
     {
         static RCON rcon;
-        const int ThreadCount = 100;
-        const int MessageCount = 100;
+        const int ThreadCount = 10;
+        const int MessageCount = 10;
         static int completed = 0;
 
         public static async void ConcurrentTestAsync()
@@ -42,17 +42,27 @@ namespace RconShell
 
         static async Task Main(string[] args)
         {
-            String ip = "192.168.2.224";
-            int port = 27015;
-            String password = "rcon";
+            String ip;
+            int port;
+            String password;
+
+            Console.WriteLine("Enter ip");
+            ip = Console.ReadLine();
+            Console.WriteLine("Enter port");
+            port = int.Parse(Console.ReadLine());
+            Console.WriteLine("Enter password");
+            password = Console.ReadLine();
+
             var endpoint = new IPEndPoint(
                 IPAddress.Parse(ip),
                 port
             );
 
-            rcon = new RCON(endpoint, password, 1000);
+            rcon = new RCON(endpoint, password, 0);
             await rcon.ConnectAsync();
             bool connected = true;
+            Console.WriteLine("Connected");
+
             rcon.OnDisconnected += () =>
             {
                 Console.WriteLine("RCON Disconnected");
