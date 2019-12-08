@@ -1,19 +1,15 @@
-## Fork
-
-This fork rewrites the RCON code to use Pipline networking to receive RCON packets. 
-It also has support for multi packet RCON responses. 
-
 # CoreRCON
 <img src="https://cdn.rawgit.com/ScottKaye/CoreRCON/master/logo.png" align="right">
 
 [![](https://readthedocs.org/projects/corercon/badge/?version=latest)](http://corercon.readthedocs.io/en/latest/)
 
-CoreRCON is an implementation of the RCON protocol on .NET Core.  It currently supports connecting to a server, sending commands and receiving their output, and receiving logs from `logaddress`.
+CoreRCON is an implementation of the RCON protocol on .NET Core.  It currently supports connecting to a server, sending commands and receiving their output, [multi-packat responses](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol#Multiple-packet_Responses), and receiving logs from `logaddress`.
 
 ### Supports:
 * **CS:GO** - (see [Source RCON Protocol](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol))
-* Potentially **Minecraft**, **ARK** and Source-based RCON implementations (untested)
-
+* **Minecraft** - Thanks to [CodingContraption](https://github.com/ScottKaye/CoreRCON/pull/7)
+* **ARK: Survival Evolved** - Confirmed working in 3.0.0 by [tgardner851](https://github.com/ScottKaye/CoreRCON/issues/10)
+* Potentially other Source-based RCON implementations (untested)
 
 ## Quick Start
 ### Connect to an RCON server and send a command
@@ -69,3 +65,6 @@ If you are seeing an error similar to this, try changing your project's targeted
 ### Version 3.0.0
 * [Supports Minecraft](https://github.com/ScottKaye/CoreRCON/pull/7)
 * Some [`ServerQuery`](https://github.com/ScottKaye/CoreRCON/blob/master/src/CoreRCON/ServerQuery.cs#L17) methods now require a server type to differentiate between Source and Minecraft
+
+
+Big thanks to [ScottKaye](https://github.com/ScottKaye) for developing the [originial version](https://github.com/ScottKaye/CoreRCON)
