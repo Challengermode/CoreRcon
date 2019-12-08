@@ -9,7 +9,14 @@ using System.Net.Sockets;
 
 /*
  * Run tests against a running RCON server
- * Configure settings before running
+ * How to run:
+ * Start a server (preferably csgo)
+ * set the cvar "log off" on the server
+ * configure the properties bellow
+ * run the tests
+ *
+ * Todo: Automate testing
+ * Todo: Make sure the tests work with log on
  */
 
 namespace CoreRCON.Tests
@@ -112,6 +119,7 @@ namespace CoreRCON.Tests
             //1. Put a brakepoint on the line bellow
             //2. When the debugger breaks quickly unplug the ethernet 
             //3. Continue
+            // Todo: Find a way to simulate this using software
             string response = await rconClient.SendCommandAsync("say hi");
         }
 
