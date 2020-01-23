@@ -47,7 +47,7 @@ namespace CoreRCON
         /// </summary>
         /// <param name="host">Server adress</param>
         /// <param name="port">Server port</param>
-        public RCON(IPAddress host, ushort port, string password, uint beaconIntervall = 30000, uint tcpTimeout = 10000, bool sourceMultiPacketSupport = false)
+        public RCON(IPAddress host, ushort port, string password, uint beaconIntervall = 0, uint tcpTimeout = 10000, bool sourceMultiPacketSupport = false)
             : this(new IPEndPoint(host, port), password, beaconIntervall, tcpTimeout, sourceMultiPacketSupport)
         { }
 
@@ -59,7 +59,7 @@ namespace CoreRCON
         /// <param name="beaconIntervall">Intervall in milisecounds to send empty requests to server to check if it is alive. A value of 0 disables beacon requests</param>
         /// <param name="tcpTimeout">TCP socket send and recive timout in milisecounds. A value of 0 means no timeout</param>
         /// <param name="sourceMultiPacketSupport">Enable source engine trick to receive multi packet responses using trick by Koraktor</param>
-        public RCON(IPEndPoint endpoint, string password, uint beaconIntervall = 30000, uint tcpTimeout = 0, bool sourceMultiPacketSupport = false)
+        public RCON(IPEndPoint endpoint, string password, uint beaconIntervall = 0, uint tcpTimeout = 0, bool sourceMultiPacketSupport = false)
         {
             _endpoint = endpoint;
             _password = password;
