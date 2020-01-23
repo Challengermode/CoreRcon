@@ -50,9 +50,6 @@ log.Listen<ChatMessage>(chat =>
 });
 ```
 
-##Todo
-[] Add an option to disable multi packet response for games without support for it. 
-
 ## Troubleshooting
 ### Can't install via NuGet
 > "Could not install package 'CoreRCON X.X.X'. You are trying to install this package into a project that targets '.NETFramework,Version=vy.y.y', but the package does not contain any assembly references or content files that are compatible with that framework. For more information, contact the package author."
