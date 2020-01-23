@@ -124,11 +124,11 @@ namespace CoreRCON
                     // Tell the PipeWriter how much was read from the Socket
                     writer.Advance(bytesRead);
                 }
-                catch (Exception ex)
+                catch
                 {
                     await writer.FlushAsync();
                     writer.Complete();
-                    throw ex;
+                    throw;
                 }
 
                 // Make the data available to the PipeReader
