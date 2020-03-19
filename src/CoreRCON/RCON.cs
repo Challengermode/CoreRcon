@@ -300,6 +300,7 @@ namespace CoreRCON
                         //Avoid yeilding
                         taskSource.SetResult(body ?? string.Empty);
                         _pendingCommands.Remove(packet.Id);
+                        _incomingBuffer.Remove(packet.Id);
                     }
                     else
                     {
