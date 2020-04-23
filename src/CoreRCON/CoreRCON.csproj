@@ -17,14 +17,11 @@
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <Version>4.6.0</Version>
+    <Version>4.7.0</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>4.6.0.0</AssemblyVersion>
-    <FileVersion>4.6.0.0</FileVersion>
-    <PackageReleaseNotes>Fix Status parsing
-Disable beacons by default
-Avoid potential memory overflow when using sourceMultiPacketSupport
-</PackageReleaseNotes>
+    <AssemblyVersion>4.7.0.0</AssemblyVersion>
+    <FileVersion>4.7.0.0</FileVersion>
+    <PackageReleaseNotes>Improved unicode support</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>logo.png</PackageIcon>
   </PropertyGroup>

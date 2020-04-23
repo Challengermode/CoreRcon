@@ -3,6 +3,12 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 
+/// <summary>
+/// Encapsulate RCONPacket specification.
+///
+/// Detailed specification of RCON packets can be found here:
+/// https://developer.valvesoftware.com/wiki/Source_RCON_Protocol
+/// </summary>
 namespace CoreRCON.PacketFormats
 {
     public class RCONPacket
@@ -47,15 +53,16 @@ namespace CoreRCON.PacketFormats
 
             try
             {
-                // Force string to \r\n line endings
+                // Some games support UTF8 payloads, ASCII will also work due to backwards compatiblity
                 char[] rawBody = Encoding.UTF8.GetChars(buffer, 12, size - 10);
-                string body = new string(rawBody, 0, size - 10).TrimEnd();
+                string body = new string(rawBody).TrimEnd();
+                // Force Line endings to match environment
                 body = Regex.Replace(body, @"\r\n|\n\r|\n|\r", "\r\n");
                 return new RCONPacket(id, type, body);
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"{DateTime.Now} - Error reading RCON packet from server: " + ex.Message);
+                Console.Error.WriteLine($"{DateTime.Now} - Error reading RCON packet body exception was: {ex.Message}");
                 return new RCONPacket(id, type, "");
             }
         }
@@ -66,15 +73,16 @@ namespace CoreRCON.PacketFormats
         /// <returns>Byte array with each field.</returns>
         internal byte[] ToBytes()
         {
-            byte[] body = Encoding.ASCII.GetBytes(Body + "\0");
-            int bl = body.Length;
+            //Should also be compatible with ASCII only servers
+            byte[] body = Encoding.UTF8.GetBytes(Body + "\0");
+            int bodyLength = body.Length;
 
-            using (var packet = new MemoryStream(12 + bl))
+            using (var packet = new MemoryStream(12 + bodyLength))
             {
-                packet.Write(BitConverter.GetBytes(9 + bl), 0, 4);
+                packet.Write(BitConverter.GetBytes(9 + bodyLength), 0, 4);
                 packet.Write(BitConverter.GetBytes(Id), 0, 4);
                 packet.Write(BitConverter.GetBytes((int)Type), 0, 4);
-                packet.Write(body, 0, bl);
+                packet.Write(body, 0, bodyLength);
                 packet.Write(new byte[] { 0 }, 0, 1);
 
                 return packet.ToArray();

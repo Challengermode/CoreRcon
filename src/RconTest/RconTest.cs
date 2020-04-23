@@ -123,5 +123,12 @@ namespace CoreRCON.Tests
             string response = await rconClient.SendCommandAsync("say hi");
         }
 
+        [TestMethod]
+        public async Task testUnicode()
+        {
+            string unicodeString = "יוהצ";
+            string response = await rconClient.SendCommandAsync($"say {unicodeString}");
+            Assert.IsTrue(response.Contains(unicodeString));
+        }
     }
 }
