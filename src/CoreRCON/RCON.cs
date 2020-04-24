@@ -141,8 +141,9 @@ namespace CoreRCON
             }
 
             // Tell the PipeReader that there's no more data coming
-            writer.Complete();
-
+            await writer.CompleteAsync();
+            _connected = false;
+            OnDisconnected();
         }
 
         /// <summary>
@@ -210,9 +211,8 @@ namespace CoreRCON
 
             }
 
-
             // Mark the PipeReader as complete
-            reader.Complete();
+            await reader.CompleteAsync();
         }
 
         public void Dispose()
