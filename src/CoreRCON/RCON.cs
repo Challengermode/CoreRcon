@@ -29,7 +29,6 @@ namespace CoreRCON
         private int _packetId = 1;
 
         private string _password;
-        private uint _beaconIntervall;
         private int _timeout;
         private bool _multiPacket;
 
@@ -47,8 +46,8 @@ namespace CoreRCON
         /// </summary>
         /// <param name="host">Server adress</param>
         /// <param name="port">Server port</param>
-        public RCON(IPAddress host, ushort port, string password, uint beaconIntervall = 0, uint tcpTimeout = 10000, bool sourceMultiPacketSupport = false)
-            : this(new IPEndPoint(host, port), password, beaconIntervall, tcpTimeout, sourceMultiPacketSupport)
+        public RCON(IPAddress host, ushort port, string password, uint tcpTimeout = 10000, bool sourceMultiPacketSupport = false)
+            : this(new IPEndPoint(host, port), password, tcpTimeout, sourceMultiPacketSupport)
         { }
 
         /// <summary>
@@ -59,11 +58,10 @@ namespace CoreRCON
         /// <param name="beaconIntervall">Intervall in milisecounds to send empty requests to server to check if it is alive. A value of 0 disables beacon requests</param>
         /// <param name="tcpTimeout">TCP socket send and recive timout in milisecounds. A value of 0 means no timeout</param>
         /// <param name="sourceMultiPacketSupport">Enable source engine trick to receive multi packet responses using trick by Koraktor</param>
-        public RCON(IPEndPoint endpoint, string password, uint beaconIntervall = 0, uint tcpTimeout = 0, bool sourceMultiPacketSupport = false)
+        public RCON(IPEndPoint endpoint, string password, uint tcpTimeout = 0, bool sourceMultiPacketSupport = false)
         {
             _endpoint = endpoint;
             _password = password;
-            _beaconIntervall = beaconIntervall;
             _timeout = (int)tcpTimeout;
             _multiPacket = sourceMultiPacketSupport;
         }
@@ -93,12 +91,6 @@ namespace CoreRCON
             await SendPacketAsync(new RCONPacket(0, PacketType.Auth, _password));
             _networkConsumerTask = Task.WhenAll(writing, reading);
             await _authenticationTask.Task;
-            if (_beaconIntervall != 0)
-            {
-                Task.Run(() =>
-                     WatchForDisconnection(_beaconIntervall).ConfigureAwait(false)
-                );
-            }
         }
 
         /// <summary>
@@ -332,41 +324,6 @@ namespace CoreRCON
             }
 
         }
-
-
-
-        /// <summary>
-        /// Polls the server to check if RCON is still authenticated.  Will still throw if the password was changed elsewhere.
-        /// </summary>
-        /// <param name="delay">Time in milliseconds to wait between polls.</param>
-        private async Task WatchForDisconnection(uint delay)
-        {
-            int checkedDelay = checked((int)delay);
-
-            while (_connected)
-            {
-                try
-                {
-                    Identifier = Guid.NewGuid().ToString().Substring(0, 5);
-                    await SendCommandAsync(Constants.CHECK_STR + Identifier);
-                }
-                catch (Exception ex)
-                {
-                    //Fail waiting messages
-                    foreach (var taskPair in _pendingCommands)
-                    {
-                        taskPair.Value.SetException(ex);
-                    }
-                    Dispose();
-                    OnDisconnected();
-                    return;
-                }
-
-                await Task.Delay(checkedDelay);
-            }
-        }
     }
-
-
 }
 

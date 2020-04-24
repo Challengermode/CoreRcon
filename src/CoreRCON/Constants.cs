@@ -3,11 +3,6 @@
     internal class Constants
     {
         /// <summary>
-        /// No-op command to send to the server.  Should be easily identifiable!
-        /// </summary>
-        internal const string CHECK_STR = "//OSW";
-
-        /// <summary>
         /// The maximum size of an RCON packet.
         /// (Officially 4096, larger packet where recived when running cvarlist)
         /// </summary>
