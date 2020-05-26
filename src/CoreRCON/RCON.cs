@@ -331,7 +331,7 @@ namespace CoreRCON
         {
             if (!_connected) throw new InvalidOperationException("Connection is closed.");
             await _tcp.SendAsync(new ArraySegment<byte>(packet.ToBytes()), SocketFlags.None);
-            if (packet.Type == PacketType.ExecCommand && !packet.Body.StartsWith(Constants.CHECK_STR) && _multiPacket)
+            if (packet.Type == PacketType.ExecCommand && _multiPacket)
             {
                 //Send a extra packet to find end of large packets
                 await _tcp.SendAsync(new ArraySegment<byte>(new RCONPacket(packet.Id, PacketType.Response, "").ToBytes()), SocketFlags.None);
