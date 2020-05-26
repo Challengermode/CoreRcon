@@ -66,4 +66,4 @@ If you are seeing an error similar to this, try changing your project's targeted
 * Some [`ServerQuery`](https://github.com/ScottKaye/CoreRCON/blob/master/src/CoreRCON/ServerQuery.cs#L17) methods now require a server type to differentiate between Source and Minecraft
 
 
-Big thanks to [ScottKaye](https://github.com/ScottKaye) for developing the [originial version](https://github.com/ScottKaye/CoreRCON)
+Big thanks to [ScottKaye](https://github.com/ScottKaye) for developing the [original version](https://github.com/ScottKaye/CoreRCON)
