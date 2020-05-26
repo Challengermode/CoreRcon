@@ -89,7 +89,15 @@ namespace CoreRCON
             // Wait for successful authentication
             _authenticationTask = new TaskCompletionSource<bool>();
             await SendPacketAsync(new RCONPacket(0, PacketType.Auth, _password));
-            _networkConsumerTask = Task.WhenAll(writing, reading);
+            _networkConsumerTask = Task.WhenAll(writing, reading)
+                .ContinueWith(t =>
+                {
+                    var aggException = t.Exception.Flatten();
+                    Console.Error.WriteLine("RCON connection closed");
+                    foreach (var exception in aggException.InnerExceptions)
+                        Console.Error.WriteLine($"Exception {exception.Message}");
+                },
+                TaskContinuationOptions.OnlyOnFaulted);
             await _authenticationTask.Task;
         }
 
@@ -119,7 +127,7 @@ namespace CoreRCON
                 catch
                 {
                     await writer.FlushAsync();
-                    writer.Complete();
+                    await writer.CompleteAsync();
                     throw;
                 }
 
@@ -266,8 +274,14 @@ namespace CoreRCON
                 return source.Task.Result;
             }
 
-            //Todo: XXX dont throw here, throw in consumer / producer and rethrow here.
-            throw new SocketException();
+            if (_networkConsumerTask.IsFaulted)
+            {
+                throw _networkConsumerTask.Exception.InnerException;
+            }
+            else
+            {
+                throw new SocketException();
+            }
         }
 
         /// <summary>
