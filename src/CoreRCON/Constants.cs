@@ -4,7 +4,7 @@
     {
         /// <summary>
         /// The maximum size of an RCON packet.
-        /// (Officially 4096, larger packet where recived when running cvarlist)
+        /// (Officially 4096, larger packet where received when running cvarlist)
         /// </summary>
         internal const int MAX_PACKET_SIZE = 4200;
 

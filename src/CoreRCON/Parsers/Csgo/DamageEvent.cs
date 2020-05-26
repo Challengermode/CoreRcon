@@ -16,7 +16,7 @@ namespace CoreRCON.Parsers.Csgo
 
     public class DamageEventParser : DefaultParser<DamageEvent>
     {
-        //Todo parse position (square bracket contetent)
+        //Todo parse position (square bracket content)
         public override string Pattern { get; } = $"(?<Attacker>{playerParser.Pattern}) \\[.*?\\] attacked (?<Target>{playerParser.Pattern}) \\[.*?\\] with \"(?<Weapon>.+?)\" " +
             "\\(damage \"(?<Damage>\\d+)\"\\) " +
             "\\(damage_armor \"(?<ArmorDamage>\\d+)\"\\) " +

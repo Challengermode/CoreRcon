@@ -42,9 +42,9 @@ namespace CoreRCON
         public event Action OnDisconnected;
 
         /// <summary>
-        /// Create RCON object, Se main contructor for more info
+        /// Create RCON object, Se main constructor for more info
         /// </summary>
-        /// <param name="host">Server adress</param>
+        /// <param name="host">Server address</param>
         /// <param name="port">Server port</param>
         public RCON(IPAddress host, ushort port, string password, uint tcpTimeout = 10000, bool sourceMultiPacketSupport = false)
             : this(new IPEndPoint(host, port), password, tcpTimeout, sourceMultiPacketSupport)
@@ -102,7 +102,7 @@ namespace CoreRCON
         }
 
         /// <summary>
-        /// Fill pipe with data when availble in the socket
+        /// Fill pipe with data when available in the socket
         /// </summary>
         /// <param name="writer"></param>
         /// <returns>Producer Task</returns>
@@ -147,7 +147,7 @@ namespace CoreRCON
         }
 
         /// <summary>
-        /// Read data from pipeline when avalible, constructing new RCON packets 
+        /// Read data from pipeline when available, constructing new RCON packets 
         /// </summary>
         /// <param name="reader"></param>
         /// <returns>Consumer Task</returns>
@@ -168,12 +168,12 @@ namespace CoreRCON
                     }
                     reader.AdvanceTo(packetStart, buffer.End);
                     continue;
-                    // Complete header not yet recived
+                    // Complete header not yet received
                 }
                 int size = BitConverter.ToInt32(buffer.Slice(packetStart, 4).ToArray(), 0);
                 if (buffer.Length >= size + 4)
                 {
-                    // Get packet end posisition 
+                    // Get packet end positions 
                     SequencePosition packetEnd = buffer.GetPosition(size + 4, packetStart);
                     byteArr = buffer.Slice(packetStart, packetEnd).ToArray();
                     RCONPacket packet = RCONPacket.FromBytes(byteArr);
@@ -223,7 +223,7 @@ namespace CoreRCON
         }
 
         /// <summary>
-        /// Send a command to the server, and wait for the response before proceeding.  Expect the result to be parseable into T.
+        /// Send a command to the server, and wait for the response before proceeding.  Expect the result to be parsable into T.
         /// </summary>
         /// <typeparam name="T">Type to parse the command as.</typeparam>
         /// <param name="command">Command to send to the server.</param>
@@ -297,13 +297,13 @@ namespace CoreRCON
             {
                 if (_multiPacket)
                 {
-                    //Read any previous messgaes 
+                    //Read any previous messages 
                     string body;
                     _incomingBuffer.TryGetValue(packet.Id, out body);
 
                     if (packet.Body == "")
                     {
-                        //Avoid yeilding
+                        //Avoid yielding
                         taskSource.SetResult(body ?? string.Empty);
                         _pendingCommands.Remove(packet.Id);
                         _incomingBuffer.Remove(packet.Id);
@@ -316,7 +316,7 @@ namespace CoreRCON
                 }
                 else
                 {
-                    //Avoid yeilding
+                    //Avoid yielding
                     taskSource.SetResult(packet.Body);
                     _pendingCommands.Remove(packet.Id);
                 }
