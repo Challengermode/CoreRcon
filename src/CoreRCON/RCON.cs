@@ -55,10 +55,9 @@ namespace CoreRCON
         /// </summary>
         /// <param name="endpoint">Server to connect to</param>
         /// <param name="password">Rcon password</param>
-        /// <param name="beaconIntervall">Intervall in milisecounds to send empty requests to server to check if it is alive. A value of 0 disables beacon requests</param>
-        /// <param name="tcpTimeout">TCP socket send and recive timout in milisecounds. A value of 0 means no timeout</param>
+        /// <param name="tcpTimeout">TCP socket send and receive timeout in milliseconds. A value of 0 means no timeout</param>
         /// <param name="sourceMultiPacketSupport">Enable source engine trick to receive multi packet responses using trick by Koraktor</param>
-        public RCON(IPEndPoint endpoint, string password, uint tcpTimeout = 0, bool sourceMultiPacketSupport = false)
+        public RCON(IPEndPoint endpoint, string password, uint tcpTimeout = 10000, bool sourceMultiPacketSupport = false)
         {
             _endpoint = endpoint;
             _password = password;
