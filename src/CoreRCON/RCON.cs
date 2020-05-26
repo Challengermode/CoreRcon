@@ -33,7 +33,7 @@ namespace CoreRCON
         private bool _multiPacket;
 
         // Map of pending command references.  These are called when a command with the matching Id (key) is received.  Commands are called only once.
-        private Dictionary<int, TaskCompletionSource<String>> _pendingCommands { get; } = new Dictionary<int, TaskCompletionSource<String>>();
+        private Dictionary<int, TaskCompletionSource<string>> _pendingCommands { get; } = new Dictionary<int, TaskCompletionSource<string>>();
         private Dictionary<int, string> _incomingBuffer { get; } = new Dictionary<int, string>();
 
         private Socket _tcp { get; set; }
@@ -232,7 +232,7 @@ namespace CoreRCON
             where T : class, IParseable, new()
         {
             string response = await SendCommandAsync(command);
-            // Se comment about TaskCreationOptions.RunContinuationsAsynchronously in SendComandAsync<String>
+            // Se comment about TaskCreationOptions.RunContinuationsAsynchronously in SendComandAsync<string>
             var source = new TaskCompletionSource<T>();
             var instance = ParserHelpers.CreateParser<T>();
             var container = new ParserContainer
