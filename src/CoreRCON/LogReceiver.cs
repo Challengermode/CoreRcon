@@ -77,9 +77,6 @@ namespace CoreRCON
 
 		private void LogAddressPacketReceived(LogAddressPacket packet)
 		{
-			// Filter out checks (if there is one)
-			if (RCON.Identifier.Length > 0 && packet.Body.Contains(Constants.CHECK_STR + RCON.Identifier))
-				return;
 
 			// Call LogAddress listeners
 			foreach (var listener in _logListeners)
