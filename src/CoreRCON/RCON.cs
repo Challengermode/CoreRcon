@@ -109,12 +109,12 @@ namespace CoreRCON
         {
             const int minimumBufferSize = Constants.MIN_PACKET_SIZE;
 
-            while (_connected)
+            try
             {
-                // Allocate at least 14 bytes from the PipeWriter
-                Memory<byte> memory = writer.GetMemory(minimumBufferSize);
-                try
+                while (_connected)
                 {
+                    // Allocate at least 14 bytes from the PipeWriter
+                    Memory<byte> memory = writer.GetMemory(minimumBufferSize);
                     int bytesRead = await _tcp.ReceiveAsync(memory, SocketFlags.None);
                     if (bytesRead == 0)
                     {
@@ -122,27 +122,24 @@ namespace CoreRCON
                     }
                     // Tell the PipeWriter how much was read from the Socket
                     writer.Advance(bytesRead);
-                }
-                catch
-                {
-                    await writer.FlushAsync();
-                    await writer.CompleteAsync();
-                    throw;
-                }
 
-                // Make the data available to the PipeReader
-                FlushResult result = await writer.FlushAsync();
+                    // Make the data available to the PipeReader
+                    FlushResult result = await writer.FlushAsync();
 
-                if (result.IsCompleted)
-                {
-                    break;
+                    if (result.IsCompleted)
+                    {
+                        break;
+                    }
                 }
             }
-
-            // Tell the PipeReader that there's no more data coming
-            await writer.CompleteAsync();
-            _connected = false;
-            OnDisconnected();
+            finally
+            {
+                // Tell the PipeReader that there's no more data coming
+                await writer.FlushAsync();
+                await writer.CompleteAsync();
+                _connected = false;
+                OnDisconnected?.Invoke();
+            }
         }
 
         /// <summary>
