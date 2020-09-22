@@ -40,7 +40,7 @@ namespace CoreRCON.Tests
         [TestInitialize]
         public async Task testInitAsync()
         {
-            rconClient = new RCON(_ip, _port, _password, 0, 1000, false);
+            rconClient = new RCON(_ip, _port, _password, 1000, false);
             await rconClient.ConnectAsync();
 
         }
@@ -76,7 +76,7 @@ namespace CoreRCON.Tests
         public async Task testLongResponseAsync()
         {
             rconClient.Dispose();
-            rconClient = new RCON(_ip, _port, _password, 0, 10000, true); //Enable multi packetsupport
+            rconClient = new RCON(_ip, _port, _password, 10000, true); //Enable multi packetsupport
             await rconClient.ConnectAsync();
             string response = await rconClient.SendCommandAsync("cvarList");
             Assert.IsTrue(response.EndsWith("total convars/concommands"));
