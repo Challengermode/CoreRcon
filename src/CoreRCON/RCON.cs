@@ -204,8 +204,12 @@ namespace CoreRCON
                 {
                     break; // exit loop
                 }
-
             }
+
+            // If authentication did not complete
+            _authenticationTask.TrySetException(
+                                new AuthenticationException($"Server did not respond to auth {_tcp.RemoteEndPoint}.")
+                                );
 
             // Mark the PipeReader as complete
             await reader.CompleteAsync();
