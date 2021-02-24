@@ -2,6 +2,7 @@
 using CoreRCON.Parsers;
 using System;
 using System.Buffers;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO.Pipelines;
 using System.Linq;
@@ -32,7 +33,7 @@ namespace CoreRCON
         private bool _multiPacket;
 
         // Map of pending command references.  These are called when a command with the matching Id (key) is received.  Commands are called only once.
-        private Dictionary<int, TaskCompletionSource<string>> _pendingCommands { get; } = new Dictionary<int, TaskCompletionSource<string>>();
+        private ConcurrentDictionary<int, TaskCompletionSource<string>> _pendingCommands { get; } = new ConcurrentDictionary<int, TaskCompletionSource<string>>();
         private Dictionary<int, string> _incomingBuffer { get; } = new Dictionary<int, string>();
 
         private Socket _tcp { get; set; }
@@ -264,7 +265,10 @@ namespace CoreRCON
             // https://github.com/davidfowl/AspNetCoreDiagnosticScenarios/blob/master/AsyncGuidance.md#always-create-taskcompletionsourcet-with-taskcreationoptionsruncontinuationsasynchronously
             var source = new TaskCompletionSource<string>();
             int packetId = Interlocked.Increment(ref _packetId);
-            _pendingCommands.Add(packetId, source);
+            if(!_pendingCommands.TryAdd(packetId, source))
+            {
+                throw new SocketException();
+            }
             RCONPacket packet = new RCONPacket(packetId, PacketType.ExecCommand, command);
 
             await SendPacketAsync(packet);
@@ -292,8 +296,7 @@ namespace CoreRCON
         private void RCONPacketReceived(RCONPacket packet)
         {
             // Call pending result and remove from map
-            TaskCompletionSource<string> taskSource;
-            if (_pendingCommands.TryGetValue(packet.Id, out taskSource))
+            if (_pendingCommands.TryGetValue(packet.Id, out TaskCompletionSource<string> taskSource))
             {
                 if (_multiPacket)
                 {
@@ -305,7 +308,7 @@ namespace CoreRCON
                     {
                         //Avoid yielding
                         taskSource.SetResult(body ?? string.Empty);
-                        _pendingCommands.Remove(packet.Id);
+                        _pendingCommands.TryRemove(packet.Id, out _);
                         _incomingBuffer.Remove(packet.Id);
                     }
                     else
@@ -318,7 +321,7 @@ namespace CoreRCON
                 {
                     //Avoid yielding
                     taskSource.SetResult(packet.Body);
-                    _pendingCommands.Remove(packet.Id);
+                    _pendingCommands.TryRemove(packet.Id, out _);
                 }
             }
         }

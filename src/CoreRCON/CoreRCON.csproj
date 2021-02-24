@@ -17,12 +17,13 @@
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <Version>5.0.1</Version>
+    <Version>5.0.2</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>5.0.1.0</AssemblyVersion>
-    <FileVersion>5.0.1.0</FileVersion>
+    <AssemblyVersion>5.0.2.0</AssemblyVersion>
+    <FileVersion>5.0.2.0</FileVersion>
     <PackageReleaseNotes>Improve performance.
-Remove usage of Locks in RCON.SendCommandAsync</PackageReleaseNotes>
+Remove usage of Locks in RCON.SendCommandAsync.
+Use Concurrent dictionary for PendingCommands.</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>logo.png</PackageIcon>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
