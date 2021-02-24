@@ -21,9 +21,11 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <AssemblyVersion>5.0.1.0</AssemblyVersion>
     <FileVersion>5.0.1.0</FileVersion>
-    <PackageReleaseNotes>Remove usage of Locks in RCON.SendCommandAsync</PackageReleaseNotes>
+    <PackageReleaseNotes>Improve performance.
+Remove usage of Locks in RCON.SendCommandAsync</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>logo.png</PackageIcon>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
