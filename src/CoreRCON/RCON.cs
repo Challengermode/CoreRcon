@@ -16,7 +16,6 @@ namespace CoreRCON
     public partial class RCON : IDisposable
     {
         internal static string Identifier = "";
-        private readonly object _lock = new object();
 
         // Allows us to keep track of when authentication succeeds, so we can block Connect from returning until it does.
         private TaskCompletionSource<bool> _authenticationTask;
@@ -258,15 +257,16 @@ namespace CoreRCON
         /// <exception cref = "System.AggregateException" >Connection exceptions</ exception >
         public async Task<string> SendCommandAsync(string command)
         {
-            Monitor.Enter(_lock);
+
             // This TaskCompletion source could be initialized with TaskCreationOptions.RunContinuationsAsynchronously
             // However we this library is designed to be able to run without its own thread
             // Read more about this option here:
             // https://github.com/davidfowl/AspNetCoreDiagnosticScenarios/blob/master/AsyncGuidance.md#always-create-taskcompletionsourcet-with-taskcreationoptionsruncontinuationsasynchronously
             var source = new TaskCompletionSource<string>();
-            _pendingCommands.Add(++_packetId, source);
-            var packet = new RCONPacket(_packetId, PacketType.ExecCommand, command);
-            Monitor.Exit(_lock);
+            int packetId = Interlocked.Increment(ref _packetId);
+            _pendingCommands.Add(packetId, source);
+            RCONPacket packet = new RCONPacket(packetId, PacketType.ExecCommand, command);
+
             await SendPacketAsync(packet);
             await Task.WhenAny(source.Task, _networkConsumerTask);
             if (source.Task.IsCompleted)
