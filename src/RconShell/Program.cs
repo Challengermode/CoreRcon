@@ -40,6 +40,30 @@ namespace RconShell
             Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} finished");
         }
 
+        static async Task PerformanceTest()
+        {
+            await rcon.SendCommandAsync("sm plugins unload cmcomp");
+            for (int i = 0; i < 3; i++)
+            {
+                await rcon.SendCommandAsync("bot_add_ct");
+                await rcon.SendCommandAsync("bot_add_t");
+            }
+            await rcon.SendCommandAsync("mp_restartgame 1");
+
+            await Task.Delay(5000);
+
+            for (int i = 0; i < 200; i++)
+            {
+                string stats = await rcon.SendCommandAsync("stats");
+                var two = stats.Split("\n")[1];
+                var arr = two.Split(" ", StringSplitOptions.RemoveEmptyEntries);
+                Console.WriteLine(arr[7]);
+                await Task.Delay(500);
+            }
+
+
+        }
+
         static async Task Main(string[] args)
         {
             String ip;
@@ -62,6 +86,8 @@ namespace RconShell
             await rcon.ConnectAsync();
             bool connected = true;
             Console.WriteLine("Connected");
+
+            await PerformanceTest();
 
             rcon.OnDisconnected += () =>
             {

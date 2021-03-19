@@ -45,6 +45,7 @@ namespace CoreRCON.Tests
             string weapon = "usp_silencer";
             string headShot = $"L 13:37 spam: \"Prince<12><STEAM_1:1:123338101><CT>\" [2264 19 128] killed \"Bot<11><STEAM_1:0:123371565><TERRORIST>\" [1938 -198 320] with \"{weapon}\" (headshot)";
             string kill = $"L 13:37 spam: \"Prince<12><STEAM_1:1:123338101><CT>\" [2264 19 128] killed \"Bot<11><STEAM_1:0:123371565><TERRORIST>\" [1938 -198 320] with \"{weapon}\"";
+            string bot = $"\"Xander<19><BOT><TERRORIST>\" [-1540 1814 0] killed \"Zim<17><BOT><CT>\" [-1477 2688 76] with \"negev\"";
             FragParser parser = new FragParser();
             Assert.IsTrue(parser.IsMatch(headShot));
             Assert.IsTrue(parser.IsMatch(kill));
@@ -53,6 +54,8 @@ namespace CoreRCON.Tests
             Assert.IsTrue(hsFarg.Headshot);
             Assert.IsFalse(frag.Headshot);
             Assert.AreEqual(frag.Weapon, weapon);
+            Assert.IsTrue(parser.IsMatch(bot));
+            Frag botFrag = parser.Parse(bot);
         }
 
         [TestMethod]

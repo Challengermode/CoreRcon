@@ -143,13 +143,50 @@ namespace CoreRCON
         }
 
         /// <summary>
+        /// Helper method that reads package
+        /// </summary>
+        public void ReadPackage(PipeReader reader, ReadOnlySequence<byte> buffer)
+        {
+            SequencePosition packetStart = buffer.Start;
+            SequenceReader<byte> sequenceReader = new SequenceReader<byte>(buffer);
+            sequenceReader.TryReadLittleEndian(out int size);
+            if (buffer.Length >= size + 4)
+            {
+                // Get packet end positions 
+                SequencePosition packetEnd = buffer.GetPosition(size + 4, packetStart);
+                RCONPacket packet = RCONPacket.FromBytes(buffer.Slice(packetStart, packetEnd));
+
+                if (packet.Type == PacketType.AuthResponse)
+                {
+                    // Failed auth responses return with an ID of -1
+                    if (packet.Id == -1)
+                    {
+                        _authenticationTask.SetException(
+                            new AuthenticationException($"Authentication failed for {_tcp.RemoteEndPoint}.")
+                            );
+                    }
+                    // Tell Connect that authentication succeeded
+                    _authenticationTask.SetResult(true);
+                }
+
+                // Forward rcon packet to handler
+                RCONPacketReceived(packet);
+                reader.AdvanceTo(packetEnd);
+            }
+            else
+            {
+                // Tell the PipeReader how much of the buffer we have consumed
+                reader.AdvanceTo(packetStart, buffer.End);
+            }
+        }
+
+        /// <summary>
         /// Read data from pipeline when available, constructing new RCON packets 
         /// </summary>
         /// <param name="reader"></param>
         /// <returns>Consumer Task</returns>
         async Task ReadPipeAsync(PipeReader reader)
         {
-            byte[] byteArr = new byte[Constants.MAX_PACKET_SIZE];
             while (true)
             {
                 ReadResult result = await reader.ReadAsync();
@@ -166,38 +203,8 @@ namespace CoreRCON
                     continue;
                     // Complete header not yet received
                 }
-                int size = BitConverter.ToInt32(buffer.Slice(packetStart, 4).ToArray(), 0);
-                if (buffer.Length >= size + 4)
-                {
-                    // Get packet end positions 
-                    SequencePosition packetEnd = buffer.GetPosition(size + 4, packetStart);
-                    byteArr = buffer.Slice(packetStart, packetEnd).ToArray();
-                    RCONPacket packet = RCONPacket.FromBytes(byteArr);
 
-                    if (packet.Type == PacketType.AuthResponse)
-                    {
-                        // Failed auth responses return with an ID of -1
-                        if (packet.Id == -1)
-                        {
-                            _authenticationTask.SetException(
-                                new AuthenticationException($"Authentication failed for {_tcp.RemoteEndPoint}.")
-                                );
-                        }
-                        // Tell Connect that authentication succeeded
-                        _authenticationTask.SetResult(true);
-                    }
-
-                    // Forward rcon packet to handler
-                    RCONPacketReceived(packet);
-
-                    reader.AdvanceTo(packetEnd);
-                }
-                else
-                {
-                    reader.AdvanceTo(packetStart, buffer.End);
-                }
-
-                // Tell the PipeReader how much of the buffer we have consumed
+                ReadPackage(reader, buffer);
 
                 // Stop reading if there's no more data coming
                 if (buffer.IsEmpty && result.IsCompleted)

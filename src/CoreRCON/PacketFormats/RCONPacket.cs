@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -37,33 +38,34 @@ namespace CoreRCON.PacketFormats
         /// </summary>
         /// <param name="buffer">Buffer to read.</param>
         /// <returns>Created packet.</returns>
-        internal static RCONPacket FromBytes(byte[] buffer)
+        internal static RCONPacket FromBytes(ReadOnlySequence<byte> buffer)
         {
-            if (buffer == null) throw new NullReferenceException("Byte buffer cannot be null.");
+            if (buffer.IsEmpty) throw new NullReferenceException("Byte buffer cannot be null.");
             if (buffer.Length < 4) throw new InvalidDataException("Buffer does not contain a size field.");
             if (buffer.Length > Constants.MAX_PACKET_SIZE) throw new InvalidDataException("Buffer is too large for an RCON packet.");
+            SequenceReader<byte> reader = new SequenceReader<byte>(buffer);
 
-            int size = BitConverter.ToInt32(buffer, 0);
+            reader.TryReadLittleEndian(out int size);
             if (size > buffer.Length - 4) throw new InvalidDataException("Packet size specified was larger then buffer");
-
             if (size < 10) throw new InvalidDataException("Packet received was invalid.");
 
-            int id = BitConverter.ToInt32(buffer, 4);
-            PacketType type = (PacketType)BitConverter.ToInt32(buffer, 8);
+            reader.TryReadLittleEndian(out int id);
+            reader.TryReadLittleEndian(out int type);
 
             try
             {
                 // Some games support UTF8 payloads, ASCII will also work due to backwards compatiblity
-                char[] rawBody = Encoding.UTF8.GetChars(buffer, 12, size - 10);
+                reader.TryReadTo(out ReadOnlySpan<byte> bodySpan, 0);
+                char[] rawBody = Encoding.UTF8.GetChars(bodySpan.ToArray());
                 string body = new string(rawBody).TrimEnd();
                 // Force Line endings to match environment
                 body = Regex.Replace(body, @"\r\n|\n\r|\n|\r", "\r\n");
-                return new RCONPacket(id, type, body);
+                return new RCONPacket(id, (PacketType) type, body);
             }
             catch (Exception ex)
             {
                 Console.Error.WriteLine($"{DateTime.Now} - Error reading RCON packet body exception was: {ex.Message}");
-                return new RCONPacket(id, type, "");
+                return new RCONPacket(id, (PacketType) type, "");
             }
         }
 
