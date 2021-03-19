@@ -42,15 +42,11 @@ Use Concurrent dictionary for PendingCommands.</PackageReleaseNotes>
   </Target>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.0">
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.3.3">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.CodeQuality.Analyzers" Version="3.3.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-    <PackageReference Include="System.IO.Pipelines" Version="4.7.2" />
+    <PackageReference Include="System.IO.Pipelines" Version="6.0.2" />
   </ItemGroup>
 
   <ItemGroup>
