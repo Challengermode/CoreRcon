@@ -233,8 +233,7 @@ namespace CoreRCON
             where T : class, IParseable, new()
         {
             string response = await SendCommandAsync(command);
-            // Se comment about TaskCreationOptions.RunContinuationsAsynchronously in SendComandAsync<string>
-            var source = new TaskCompletionSource<T>();
+            var source = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
             var instance = ParserHelpers.CreateParser<T>();
             var container = new ParserContainer
             {
@@ -258,12 +257,7 @@ namespace CoreRCON
         /// <exception cref = "System.AggregateException" >Connection exceptions</ exception >
         public async Task<string> SendCommandAsync(string command)
         {
-
-            // This TaskCompletion source could be initialized with TaskCreationOptions.RunContinuationsAsynchronously
-            // However we this library is designed to be able to run without its own thread
-            // Read more about this option here:
-            // https://github.com/davidfowl/AspNetCoreDiagnosticScenarios/blob/master/AsyncGuidance.md#always-create-taskcompletionsourcet-with-taskcreationoptionsruncontinuationsasynchronously
-            var source = new TaskCompletionSource<string>();
+            var source = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
             int packetId = Interlocked.Increment(ref _packetId);
             if(!_pendingCommands.TryAdd(packetId, source))
             {
