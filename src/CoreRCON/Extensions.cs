@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace CoreRCON
@@ -122,6 +123,56 @@ namespace CoreRCON
             }
 
             return result;
+        }
+
+        // See https://github.com/davidfowl/AspNetCoreDiagnosticScenarios/blob/master/Scenarios/Infrastructure/TaskExtensions.cs
+        public static async Task<T> TimeoutAfter<T>(this Task<T> task, TimeSpan? timeout)
+        {
+            if (timeout == null || timeout == TimeSpan.Zero) return await task;
+
+            using (var cts = new CancellationTokenSource())
+            {
+                var delayTask = Task.Delay(timeout.Value, cts.Token);
+
+                var resultTask = await Task.WhenAny(task, delayTask);
+                if (resultTask == delayTask)
+                {
+                    // Operation cancelled
+                    throw new TimeoutException();
+                }
+                else
+                {
+                    cts.Cancel();
+                }
+
+                return await task;
+            }
+        }
+
+        public static async Task TimeoutAfter(this Task task, TimeSpan? timeout)
+        {
+            if (timeout == null || timeout == TimeSpan.Zero)
+            {
+                await task;
+                return;
+            }
+
+            using (var cts = new CancellationTokenSource())
+            {
+                var delayTask = Task.Delay(timeout.Value, cts.Token);
+
+                var resultTask = await Task.WhenAny(task, delayTask);
+                if (resultTask == delayTask)
+                {
+                    throw new TimeoutException();
+                }
+                else
+                {
+                    // Cancel the timer task so that it does not fire
+                    cts.Cancel();
+                }
+                await task;
+            }
         }
     }
 }
