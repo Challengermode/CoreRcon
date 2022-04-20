@@ -19,6 +19,7 @@ The IP address supplied here is the server you wish to connect to.
 ```cs
 using CoreRCON;
 using CoreRCON.Parsers.Standard;
+using System.Net;
 // ...
 
 // Connect to a server
