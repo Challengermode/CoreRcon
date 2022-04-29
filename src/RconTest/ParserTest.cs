@@ -1,9 +1,9 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using CoreRCON.Parsers.Standard;
 using CoreRCON.Parsers.Csgo;
+using CoreRCON.Parsers.Standard;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace CoreRCON.Tests
 {

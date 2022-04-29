@@ -1,6 +1,4 @@
-﻿using CoreRCON.PacketFormats;
-using CoreRCON.Parsers;
-using System;
+﻿using System;
 using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -11,6 +9,8 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
+using CoreRCON.PacketFormats;
+using CoreRCON.Parsers;
 
 namespace CoreRCON
 {
@@ -274,7 +274,7 @@ namespace CoreRCON
             // https://github.com/davidfowl/AspNetCoreDiagnosticScenarios/blob/master/AsyncGuidance.md#always-create-taskcompletionsourcet-with-taskcreationoptionsruncontinuationsasynchronously
             var source = new TaskCompletionSource<string>();
             int packetId = Interlocked.Increment(ref _packetId);
-            if(!_pendingCommands.TryAdd(packetId, source))
+            if (!_pendingCommands.TryAdd(packetId, source))
             {
                 throw new SocketException();
             }

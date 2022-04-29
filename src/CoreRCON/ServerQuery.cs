@@ -1,11 +1,11 @@
-﻿using CoreRCON.PacketFormats;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
+using CoreRCON.PacketFormats;
 
 namespace CoreRCON
 {
@@ -15,11 +15,12 @@ namespace CoreRCON
     /// <see cref="https://developer.valvesoftware.com/wiki/Server_queries"/>
     /// <see cref="http://wiki.vg/Query"/>
     public class ServerQuery
-	{
+    {
         /// <summary>
         /// The different query implementations.
         /// </summary>
-        public enum ServerType {
+        public enum ServerType
+        {
             Source,
             Minecraft
         }

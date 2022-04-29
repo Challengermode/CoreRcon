@@ -28,10 +28,10 @@ namespace RconShell
             var context = SynchronizationContext.Current;
             if (context != null)
                 Console.WriteLine($"Context {context.ToString()}");
-            for (int i = 0; i< MessageCount; i++)
+            for (int i = 0; i < MessageCount; i++)
             {
                 string response = await rcon.SendCommandAsync($"say {i}");
-                if(response.EndsWith($"Console: {i}"))
+                if (response.EndsWith($"Console: {i}"))
                 {
                     Console.WriteLine($"Thread {Thread.CurrentThread.ManagedThreadId} failed on iteration {i} response = {response}");
                 }
@@ -72,18 +72,18 @@ namespace RconShell
             while (connected)
             {
                 String command = Console.ReadLine();
-                if(command == "conctest")
+                if (command == "conctest")
                 {
                     completed = 0;
                     List<Thread> threadList = new List<Thread>(ThreadCount);
-                    for (int i = 0; i<ThreadCount; i++)
+                    for (int i = 0; i < ThreadCount; i++)
                     {
                         ThreadStart childref = new ThreadStart(ConcurrentTestAsync);
                         Thread childThread = new Thread(childref);
                         childThread.Start();
                         threadList.Add(childThread);
                     }
-                    while(completed < ThreadCount)
+                    while (completed < ThreadCount)
                     {
                         await Task.Delay(1);
                     }

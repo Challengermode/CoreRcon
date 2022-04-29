@@ -1,11 +1,11 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Threading.Tasks;
-using CoreRCON;
-using System.Net;
-using System;
+ï»¿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Sockets;
+using System.Threading.Tasks;
+using CoreRCON;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /*
  * Run tests against a running RCON server
@@ -126,7 +126,7 @@ namespace CoreRCON.Tests
         [TestMethod]
         public async Task testUnicode()
         {
-            string unicodeString = "éåäö";
+            string unicodeString = "Ã©Ã¥Ã¤Ã¶";
             string response = await rconClient.SendCommandAsync($"say {unicodeString}");
             Assert.IsTrue(response.Contains(unicodeString));
         }
