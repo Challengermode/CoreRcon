@@ -21,7 +21,7 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <AssemblyVersion>5.0.5.0</AssemblyVersion>
     <FileVersion>5.0.5.0</FileVersion>
-    <PackageReleaseNotes> Add OnPacketReceived event (#18) </PackageReleaseNotes>
+    <PackageReleaseNotes> Add OnPacketReceived event (#18)</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>logo.png</PackageIcon>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>

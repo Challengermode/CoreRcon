@@ -1,11 +1,8 @@
-# CoreRCON
-<img src="https://cdn.rawgit.com/ScottKaye/CoreRCON/master/logo.png" align="right">
+![CoreRcon](https://raw.githubusercontent.com/Challengermode/CoreRCON/master/logo.png)
 
-[![](https://readthedocs.org/projects/corercon/badge/?version=latest)](http://corercon.readthedocs.io/en/latest/)
-[![Nuget](https://img.shields.io/nuget/v/CoreRCON)](https://www.nuget.org/packages/CoreRCON/)
-[![Nuget](https://img.shields.io/nuget/dt/CoreRCON)](https://www.nuget.org/packages/CoreRCON/)
+[![Nuget](https://img.shields.io/nuget/v/CoreRCON)](https://www.nuget.org/packages/CoreRCON/) [![Nuget](https://img.shields.io/nuget/dt/CoreRCON)](https://www.nuget.org/packages/CoreRCON/)
 
-CoreRCON is an implementation of the RCON protocol on .NET Core.  It currently supports connecting to a server, sending commands and receiving their output, [multi-packat responses](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol#Multiple-packet_Responses), and receiving logs from `logaddress`.
+CoreRCON is an implementation of the RCON protocol on .NET Core. It currently supports connecting to a server, sending commands and receiving their output, [multi-packat responses](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol#Multiple-packet_Responses), and receiving logs from `logaddress`.
 
 ### Supports:
 * **CS:GO**, **TF2** - (see [Source RCON Protocol](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol))
