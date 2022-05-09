@@ -26,7 +26,7 @@ Add a timeout parameter to A2S_INFO if set, an exception will be thrown if the s
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>logo.png</PackageIcon>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
-    <PackageReadmeFile></PackageReadmeFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -53,6 +53,10 @@ Add a timeout parameter to A2S_INFO if set, an exception will be thrown if the s
     <None Include="..\..\logo.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
+    </None>
+    <None Include="..\..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
 
