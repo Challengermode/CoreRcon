@@ -39,8 +39,14 @@ namespace CoreRCON
         private Socket _tcp { get; set; }
         private Task _networkConsumerTask;
 
+        /// <summary>
+        /// Fired if connection is lost
+        /// </summary>
         public event Action OnDisconnected;
 
+        /// <summary>
+        /// Fired when an RCON package has been received
+        /// </summary>
         public event Action<RCONPacket> OnPacketReceived;
 
         /// <summary>
