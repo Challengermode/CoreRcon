@@ -41,14 +41,7 @@ namespace CoreRCON
 
         public event Action OnDisconnected;
 
-        public class PacketReceivedEventArgs : EventArgs
-        {
-            public RCONPacket RCONPacket { get; set; }
-        }
-
-        public delegate void PacketReceivedEventHandler(object sender, PacketReceivedEventArgs e);
-
-        public event PacketReceivedEventHandler OnPacketReceived;
+        public event Action<RCONPacket> OnPacketReceived;
 
         /// <summary>
         /// Create RCON object, Se main constructor for more info
@@ -334,7 +327,7 @@ namespace CoreRCON
                 }
             }
 
-            OnPacketReceived?.Invoke(this, new PacketReceivedEventArgs() { RCONPacket = packet });
+            OnPacketReceived?.Invoke(packet);
         }
 
         /// <summary>
