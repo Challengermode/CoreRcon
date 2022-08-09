@@ -31,6 +31,7 @@ namespace CoreRCON
         private string _password;
         private int _timeout;
         private bool _multiPacket;
+        private bool _logging;
 
         // Map of pending command references.  These are called when a command with the matching Id (key) is received.  Commands are called only once.
         private ConcurrentDictionary<int, TaskCompletionSource<string>> _pendingCommands { get; } = new ConcurrentDictionary<int, TaskCompletionSource<string>>();
@@ -54,8 +55,12 @@ namespace CoreRCON
         /// </summary>
         /// <param name="host">Server address</param>
         /// <param name="port">Server port</param>
-        public RCON(IPAddress host, ushort port, string password, uint tcpTimeout = 10000, bool sourceMultiPacketSupport = false)
-            : this(new IPEndPoint(host, port), password, tcpTimeout, sourceMultiPacketSupport)
+        /// <param name="password">Rcon password</param>
+        /// <param name="tcpTimeout">TCP socket send and receive timeout in milliseconds. A value of 0 means no timeout</param>
+        /// <param name="sourceMultiPacketSupport">Enable source engine trick to receive multi packet responses using trick by Koraktor</param>
+        /// <param name="logging">Enable error logging</param>
+        public RCON(IPAddress host, ushort port, string password, uint tcpTimeout = 10000, bool sourceMultiPacketSupport = false, bool logging = true)
+            : this(new IPEndPoint(host, port), password, tcpTimeout, sourceMultiPacketSupport, logging)
         { }
 
         /// <summary>
@@ -65,12 +70,14 @@ namespace CoreRCON
         /// <param name="password">Rcon password</param>
         /// <param name="tcpTimeout">TCP socket send and receive timeout in milliseconds. A value of 0 means no timeout</param>
         /// <param name="sourceMultiPacketSupport">Enable source engine trick to receive multi packet responses using trick by Koraktor</param>
-        public RCON(IPEndPoint endpoint, string password, uint tcpTimeout = 10000, bool sourceMultiPacketSupport = false)
+        /// <param name="logging">Enable error logging</param>
+        public RCON(IPEndPoint endpoint, string password, uint tcpTimeout = 10000, bool sourceMultiPacketSupport = false, bool logging = true)
         {
             _endpoint = endpoint;
             _password = password;
             _timeout = (int)tcpTimeout;
             _multiPacket = sourceMultiPacketSupport;
+            _logging = logging;
         }
 
         /// <summary>
@@ -99,6 +106,11 @@ namespace CoreRCON
             _networkConsumerTask = Task.WhenAll(writing, reading)
                 .ContinueWith(t =>
                 {
+                    if (!_logging)
+                    {
+                        return;
+                    }
+                    
                     var aggException = t.Exception.Flatten();
                     Console.Error.WriteLine("RCON connection closed");
                     foreach (var exception in aggException.InnerExceptions)
