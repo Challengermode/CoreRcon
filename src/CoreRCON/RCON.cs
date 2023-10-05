@@ -87,7 +87,8 @@ namespace CoreRCON
             _tcp.ReceiveTimeout = _timeout;
             _tcp.SendTimeout = _timeout;
             _tcp.NoDelay = true;
-            await _tcp.ConnectAsync(_endpoint);
+            await _tcp.ConnectAsync(_endpoint)
+                .ConfigureAwait(false);
             _connected = true;
             Pipe pipe = new Pipe();
             Task writing = FillPipeAsync(pipe.Writer);
@@ -95,7 +96,8 @@ namespace CoreRCON
 
             // Wait for successful authentication
             _authenticationTask = new TaskCompletionSource<bool>();
-            await SendPacketAsync(new RCONPacket(0, PacketType.Auth, _password));
+            await SendPacketAsync(new RCONPacket(0, PacketType.Auth, _password))
+                .ConfigureAwait(false);
             _networkConsumerTask = Task.WhenAll(writing, reading)
                 .ContinueWith(t =>
                 {
@@ -105,7 +107,9 @@ namespace CoreRCON
                         Console.Error.WriteLine($"Exception {exception.Message}");
                 },
                 TaskContinuationOptions.OnlyOnFaulted);
-            await _authenticationTask.Task;
+            await _authenticationTask.Task
+                .TimeoutAfter(TimeSpan.FromSeconds(_timeout))
+                .ConfigureAwait(false);
         }
 
         /// <summary>
@@ -123,7 +127,8 @@ namespace CoreRCON
                 {
                     // Allocate at least 14 bytes from the PipeWriter
                     Memory<byte> memory = writer.GetMemory(minimumBufferSize);
-                    int bytesRead = await _tcp.ReceiveAsync(memory, SocketFlags.None);
+                    int bytesRead = await _tcp.ReceiveAsync(memory, SocketFlags.None)
+                        .ConfigureAwait(false);
                     if (bytesRead == 0)
                     {
                         break;
@@ -132,7 +137,8 @@ namespace CoreRCON
                     writer.Advance(bytesRead);
 
                     // Make the data available to the PipeReader
-                    FlushResult result = await writer.FlushAsync();
+                    FlushResult result = await writer.FlushAsync()
+                        .ConfigureAwait(false);
 
                     if (result.IsCompleted)
                     {
@@ -143,8 +149,10 @@ namespace CoreRCON
             finally
             {
                 // Tell the PipeReader that there's no more data coming
-                await writer.FlushAsync();
-                await writer.CompleteAsync();
+                await writer.FlushAsync()
+                    .ConfigureAwait(false);
+                await writer.CompleteAsync()
+                    .ConfigureAwait(false);
                 _connected = false;
                 OnDisconnected?.Invoke();
             }
@@ -160,7 +168,8 @@ namespace CoreRCON
             byte[] byteArr = new byte[Constants.MAX_PACKET_SIZE];
             while (true)
             {
-                ReadResult result = await reader.ReadAsync();
+                ReadResult result = await reader.ReadAsync()
+                    .ConfigureAwait(false);
                 ReadOnlySequence<byte> buffer = result.Buffer;
                 SequencePosition packetStart = buffer.Start;
 
@@ -220,7 +229,7 @@ namespace CoreRCON
                                 );
 
             // Mark the PipeReader as complete
-            await reader.CompleteAsync();
+            await reader.CompleteAsync().ConfigureAwait(false);
         }
 
         public void Dispose()
@@ -240,7 +249,7 @@ namespace CoreRCON
         public async Task<T> SendCommandAsync<T>(string command)
             where T : class, IParseable, new()
         {
-            string response = await SendCommandAsync(command);
+            string response = await SendCommandAsync(command).ConfigureAwait(false);
             // Se comment about TaskCreationOptions.RunContinuationsAsynchronously in SendComandAsync<string>
             var source = new TaskCompletionSource<T>();
             var instance = ParserHelpers.CreateParser<T>();
@@ -249,7 +258,6 @@ namespace CoreRCON
                 IsMatch = line => instance.IsMatch(line),
                 Parse = line => instance.Parse(line),
             };
-
 
             object parsed;
             if (!container.TryParse(response, out parsed))
@@ -260,7 +268,7 @@ namespace CoreRCON
         }
 
         /// <summary>
-        /// Send a command to the server, and wait for the response before proceeding.  R
+        /// Send a command to the server, and wait for the response before proceeding. 
         /// </summary>
         /// <param name="command">Command to send to the server.</param>
         /// <exception cref = "System.AggregateException" >Connection exceptions</ exception >
@@ -279,12 +287,19 @@ namespace CoreRCON
             }
             RCONPacket packet = new RCONPacket(packetId, PacketType.ExecCommand, command);
 
-            await SendPacketAsync(packet);
-            await Task.WhenAny(source.Task, _networkConsumerTask);
+            await SendPacketAsync(packet).ConfigureAwait(false);
+            await Task.WhenAny(source.Task, _networkConsumerTask)
+                .TimeoutAfter(TimeSpan.FromSeconds(_timeout))
+                .ConfigureAwait(false);
+
+
             if (source.Task.IsCompleted)
             {
                 return source.Task.Result;
             }
+
+            _pendingCommands.TryRemove(packet.Id, out _);
+            _incomingBuffer.Remove(packet.Id);
 
             if (_networkConsumerTask.IsFaulted)
             {
@@ -343,11 +358,14 @@ namespace CoreRCON
         private async Task SendPacketAsync(RCONPacket packet)
         {
             if (!_connected) throw new InvalidOperationException("Connection is closed.");
-            await _tcp.SendAsync(new ArraySegment<byte>(packet.ToBytes()), SocketFlags.None);
+            await _tcp.SendAsync(new ArraySegment<byte>(packet.ToBytes()), SocketFlags.None)
+                .ConfigureAwait(false);
             if (packet.Type == PacketType.ExecCommand && _multiPacket)
             {
                 //Send a extra packet to find end of large packets
-                await _tcp.SendAsync(new ArraySegment<byte>(new RCONPacket(packet.Id, PacketType.Response, "").ToBytes()), SocketFlags.None);
+                var emptyPackage = new RCONPacket(packet.Id, PacketType.Response, "");
+                await _tcp.SendAsync(new ArraySegment<byte>(emptyPackage.ToBytes()), SocketFlags.None)
+                    .ConfigureAwait(false);
             }
 
         }
