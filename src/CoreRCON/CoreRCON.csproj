@@ -21,7 +21,9 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <AssemblyVersion>5.1.0</AssemblyVersion>
     <FileVersion>5.1.0.0</FileVersion>
-    <PackageReleaseNotes> Add OnPacketReceived event (#18)</PackageReleaseNotes>
+    <PackageReleaseNotes>Made logging optional (#27)
+Added application level timeouts exceptions.
+Disabled concurrent requests for now.</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>logo.png</PackageIcon>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>

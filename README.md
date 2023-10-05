@@ -5,9 +5,10 @@
 CoreRCON is an implementation of the RCON protocol on .NET Core. It currently supports connecting to a server, sending commands and receiving their output, [multi-packat responses](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol#Multiple-packet_Responses), and receiving logs from `logaddress`.
 
 ### Supports:
-* **CS:GO**, **TF2** - (see [Source RCON Protocol](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol))
+* **CS2**, **TF2** - (see [Source RCON Protocol](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol))
 * **Minecraft** - Thanks to [CodingContraption](https://github.com/ScottKaye/CoreRCON/pull/7)
 * **ARK: Survival Evolved** - Confirmed working in 3.0.0 by [tgardner851](https://github.com/ScottKaye/CoreRCON/issues/10)
+* **Project Zomboid Multiplayer** - Confirmed working by [captainqwerty](https://github.com/Challengermode/CoreRcon/issues/26)
 * Potentially other Source-based RCON implementations (untested)
 
 ## Quick Start
