@@ -7,6 +7,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using CoreRCON;
 using CoreRCON.PacketFormats;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 /*
  * Simple Interactive RCON shell
@@ -42,9 +44,15 @@ namespace RconShell
 
         static async Task Main(string[] args)
         {
-            String ip;
+            var serviceProvider = new ServiceCollection()
+                 .AddLogging(builder => {
+                     builder.SetMinimumLevel(LogLevel.Debug);
+                 })
+                 .BuildServiceProvider();
+
+            string ip;
             int port;
-            String password;
+            string password;
 
             Console.WriteLine("Enter ip");
             ip = Console.ReadLine();
@@ -58,7 +66,7 @@ namespace RconShell
                 port
             );
 
-            rcon = new RCON(endpoint, password, 0);
+            rcon = new RCON(endpoint, password, 0, logger:  serviceProvider.GetService<ILogger<RCON>>());
             await rcon.ConnectAsync();
             bool connected = true;
             Console.WriteLine("Connected");
@@ -71,7 +79,7 @@ namespace RconShell
 
             while (connected)
             {
-                String command = Console.ReadLine();
+                string command = Console.ReadLine();
                 if (command == "conctest")
                 {
                     completed = 0;
@@ -89,7 +97,7 @@ namespace RconShell
                     }
                     continue;
                 }
-                String response = await rcon.SendCommandAsync(command);
+                string response = await rcon.SendCommandAsync(command);
                 Console.WriteLine(response);
             }
         }

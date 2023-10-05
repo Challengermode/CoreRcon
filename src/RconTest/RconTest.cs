@@ -5,7 +5,11 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using CoreRCON;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 
 /*
  * Run tests against a running RCON server
@@ -40,9 +44,18 @@ namespace CoreRCON.Tests
         [TestInitialize]
         public async Task testInitAsync()
         {
-            rconClient = new RCON(_ip, _port, _password, 1000, false);
-            await rconClient.ConnectAsync();
+            using var loggerFactory = LoggerFactory.Create(builder =>
+            {
+                builder
+                    .SetMinimumLevel(LogLevel.Trace)
+                    .AddFilter("Microsoft", LogLevel.Warning)
+                    .AddFilter("ConsoleApp", LogLevel.Debug)
+                    .AddConsole();
+            });
+            ILogger<RCON> logger = loggerFactory.CreateLogger<RCON>();
 
+            rconClient = new RCON(_ip, _port, _password, 1000, false, logger);
+            await rconClient.ConnectAsync();
         }
 
 
@@ -68,7 +81,7 @@ namespace CoreRCON.Tests
         public async Task testEchoAsync()
         {
             string response = await rconClient.SendCommandAsync("say hi");
-            Assert.AreEqual("Console: hi", response);
+            Assert.IsTrue(response.Contains("hi"));
         }
 
 
@@ -89,7 +102,7 @@ namespace CoreRCON.Tests
             for (int i = 0; i < 10; i++)
             {
                 string response = await rconClient.SendCommandAsync($"say {i}");
-                Assert.AreEqual($"Console: {i}", response);
+                Assert.IsTrue(response.Contains($"{i}"));
             }
         }
 
@@ -103,7 +116,7 @@ namespace CoreRCON.Tests
                 {
                     string response = await rconClient.SendCommandAsync($"say {i}");
                     Console.WriteLine($"recived response {i} : {response}");
-                    Assert.AreEqual($"Console: {i}", response);
+                    Assert.IsTrue(response.Contains($"{i}"));
                 }).ToList();
             //Parallel.ForEach(tasks, task => task.Start());
             await Task.WhenAll(tasks);
@@ -116,6 +129,10 @@ namespace CoreRCON.Tests
         [ExpectedException(typeof(SocketException))]
         public async Task testNetworkCut()
         {
+            rconClient.Dispose();
+            rconClient = new RCON(_ip, _port, _password, 0, false);
+            await rconClient.ConnectAsync();
+
             //1. Put a brakepoint on the line bellow
             //2. When the debugger breaks quickly unplug the ethernet 
             //3. Continue

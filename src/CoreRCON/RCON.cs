@@ -6,11 +6,11 @@ using System.IO.Pipelines;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using CoreRCON.PacketFormats;
 using CoreRCON.Parsers;
+using Microsoft.Extensions.Logging;
 
 namespace CoreRCON
 {
@@ -39,6 +39,9 @@ namespace CoreRCON
         private Socket _tcp { get; set; }
         private Task _networkConsumerTask;
 
+        private readonly ILogger _logger;
+        SemaphoreSlim _semaphoreSlim;
+
         /// <summary>
         /// Fired if connection is lost
         /// </summary>
@@ -54,8 +57,9 @@ namespace CoreRCON
         /// </summary>
         /// <param name="host">Server address</param>
         /// <param name="port">Server port</param>
-        public RCON(IPAddress host, ushort port, string password, uint tcpTimeout = 10000, bool sourceMultiPacketSupport = false)
-            : this(new IPEndPoint(host, port), password, tcpTimeout, sourceMultiPacketSupport)
+        public RCON(IPAddress host, ushort port, string password, uint timeout = 10000, 
+            bool sourceMultiPacketSupport = false, ILogger logger = null)
+            : this(new IPEndPoint(host, port), password, timeout, sourceMultiPacketSupport, logger)
         { }
 
         /// <summary>
@@ -63,14 +67,21 @@ namespace CoreRCON
         /// </summary>
         /// <param name="endpoint">Server to connect to</param>
         /// <param name="password">Rcon password</param>
-        /// <param name="tcpTimeout">TCP socket send and receive timeout in milliseconds. A value of 0 means no timeout</param>
+        /// <param name="timeout">Timout to connect and send messages in milliseconds. A value of 0 means no timeout</param>
         /// <param name="sourceMultiPacketSupport">Enable source engine trick to receive multi packet responses using trick by Koraktor</param>
-        public RCON(IPEndPoint endpoint, string password, uint tcpTimeout = 10000, bool sourceMultiPacketSupport = false)
+        /// <param name="logger">Logger to use, null means none</param>
+        public RCON(IPEndPoint endpoint, string password, 
+            uint timeout = 10000, 
+            bool sourceMultiPacketSupport = false, 
+            ILogger logger = null)
         {
             _endpoint = endpoint;
             _password = password;
-            _timeout = (int)tcpTimeout;
+            _timeout = (int)timeout;
             _multiPacket = sourceMultiPacketSupport;
+            _logger = logger;
+            // Limit SenConcurrency to 1
+            _semaphoreSlim = new SemaphoreSlim(1, 1);
         }
 
         /// <summary>
@@ -101,15 +112,25 @@ namespace CoreRCON
             _networkConsumerTask = Task.WhenAll(writing, reading)
                 .ContinueWith(t =>
                 {
-                    var aggException = t.Exception.Flatten();
-                    Console.Error.WriteLine("RCON connection closed");
-                    foreach (var exception in aggException.InnerExceptions)
-                        Console.Error.WriteLine($"Exception {exception.Message}");
+                    if (_connected)
+                    {
+                        var aggException = t.Exception.Flatten();
+                        _logger?.LogError("RCON connection closed");
+                        foreach (var exception in aggException.InnerExceptions)
+                            _logger?.LogError($"Exception {exception.Message}");
+                    }
                 },
                 TaskContinuationOptions.OnlyOnFaulted);
-            await _authenticationTask.Task
-                .TimeoutAfter(TimeSpan.FromSeconds(_timeout))
-                .ConfigureAwait(false);
+            try
+            {
+                await _authenticationTask.Task
+                    .TimeoutAfter(TimeSpan.FromMilliseconds(_timeout))
+                    .ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                throw new TimeoutException("Timeout while waiting for authentication response from server");
+            }
         }
 
         /// <summary>
@@ -165,7 +186,6 @@ namespace CoreRCON
         /// <returns>Consumer Task</returns>
         async Task ReadPipeAsync(PipeReader reader)
         {
-            byte[] byteArr = new byte[Constants.MAX_PACKET_SIZE];
             while (true)
             {
                 ReadResult result = await reader.ReadAsync()
@@ -188,7 +208,7 @@ namespace CoreRCON
                 {
                     // Get packet end positions 
                     SequencePosition packetEnd = buffer.GetPosition(size + 4, packetStart);
-                    byteArr = buffer.Slice(packetStart, packetEnd).ToArray();
+                    byte[] byteArr = buffer.Slice(packetStart, packetEnd).ToArray();
                     RCONPacket packet = RCONPacket.FromBytes(byteArr);
 
                     if (packet.Type == PacketType.AuthResponse)
@@ -286,20 +306,33 @@ namespace CoreRCON
                 throw new SocketException();
             }
             RCONPacket packet = new RCONPacket(packetId, PacketType.ExecCommand, command);
+            // ensuer mutal execution of SendPacketAsync and RCONPacketReceived
 
+
+            await _semaphoreSlim.WaitAsync();
             await SendPacketAsync(packet).ConfigureAwait(false);
-            await Task.WhenAny(source.Task, _networkConsumerTask)
-                .TimeoutAfter(TimeSpan.FromSeconds(_timeout))
-                .ConfigureAwait(false);
 
+            try
+            {
+                await Task.WhenAny(source.Task, _networkConsumerTask)
+                    .TimeoutAfter(TimeSpan.FromMilliseconds(_timeout))
+                    .ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                throw new TimeoutException("Timeout while waiting for response from server");
+            }
+            finally
+            {
+                _semaphoreSlim.Release();
+                _pendingCommands.TryRemove(packet.Id, out _);
+                _incomingBuffer.Remove(packet.Id);
+            }
 
             if (source.Task.IsCompleted)
             {
                 return source.Task.Result;
             }
-
-            _pendingCommands.TryRemove(packet.Id, out _);
-            _incomingBuffer.Remove(packet.Id);
 
             if (_networkConsumerTask.IsFaulted)
             {
@@ -318,6 +351,7 @@ namespace CoreRCON
         /// <param name="packet"> Newly received packet </param>
         private void RCONPacketReceived(RCONPacket packet)
         {
+            _logger?.LogDebug("RCON packet received: {0}", packet.Id);
             // Call pending result and remove from map
             if (_pendingCommands.TryGetValue(packet.Id, out TaskCompletionSource<string> taskSource))
             {
