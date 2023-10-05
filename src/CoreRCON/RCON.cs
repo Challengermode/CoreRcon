@@ -67,7 +67,7 @@ namespace CoreRCON
         /// </summary>
         /// <param name="endpoint">Server to connect to</param>
         /// <param name="password">Rcon password</param>
-        /// <param name="timeout">Timout to connect and send messages in milliseconds. A value of 0 means no timeout</param>
+        /// <param name="timeout">Timeout to connect and send messages in milliseconds. A value of 0 means no timeout</param>
         /// <param name="sourceMultiPacketSupport">Enable source engine trick to receive multi packet responses using trick by Koraktor</param>
         /// <param name="logger">Logger to use, null means none</param>
         public RCON(IPEndPoint endpoint, string password, 
@@ -310,10 +310,9 @@ namespace CoreRCON
 
 
             await _semaphoreSlim.WaitAsync();
-            await SendPacketAsync(packet).ConfigureAwait(false);
-
             try
             {
+                await SendPacketAsync(packet).ConfigureAwait(false);
                 await Task.WhenAny(source.Task, _networkConsumerTask)
                     .TimeoutAfter(TimeSpan.FromMilliseconds(_timeout))
                     .ConfigureAwait(false);
