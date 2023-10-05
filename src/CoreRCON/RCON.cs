@@ -80,7 +80,7 @@ namespace CoreRCON
             _timeout = (int)timeout;
             _multiPacket = sourceMultiPacketSupport;
             _logger = logger;
-            // Limit SenConcurrency to 1
+            // Limit SenConcurrency to 1 to avoid issue with server not handling it well
             _semaphoreSlim = new SemaphoreSlim(1, 1);
         }
 
@@ -351,7 +351,7 @@ namespace CoreRCON
         /// <param name="packet"> Newly received packet </param>
         private void RCONPacketReceived(RCONPacket packet)
         {
-            _logger?.LogDebug("RCON packet received: {0}", packet.Id);
+            _logger?.LogTrace("RCON packet received: {0}", packet.Id);
             // Call pending result and remove from map
             if (_pendingCommands.TryGetValue(packet.Id, out TaskCompletionSource<string> taskSource))
             {
@@ -391,6 +391,7 @@ namespace CoreRCON
         /// <param name="packet">Packet to send, which will be serialized.</param>
         private async Task SendPacketAsync(RCONPacket packet)
         {
+            _logger?.LogTrace("Send packet: {0}", packet.Id);
             if (!_connected) throw new InvalidOperationException("Connection is closed.");
             await _tcp.SendAsync(new ArraySegment<byte>(packet.ToBytes()), SocketFlags.None)
                 .ConfigureAwait(false);
