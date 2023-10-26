@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <Description>A .NET Core implementation of the RCON spec.</Description>
+    <Description>A .NET Standard implementation of the Source RCON Protocol.</Description>
     <AssemblyTitle>CoreRCON</AssemblyTitle>
     <VersionPrefix>2.0.0</VersionPrefix>
     <Authors>Alexander Westberg-Bladh Scott Kaye</Authors>
@@ -17,13 +17,12 @@
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
-    <Version>5.1.0</Version>
+    <Version>5.2.0</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <AssemblyVersion>5.1.0</AssemblyVersion>
     <FileVersion>5.1.0.0</FileVersion>
-    <PackageReleaseNotes>Made logging optional (#27)
-Added application level timeouts exceptions.
-Disabled concurrent requests for now.</PackageReleaseNotes>
+    <PackageReleaseNotes>Observer exceptions correctly.
+Support larger </PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>logo.png</PackageIcon>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
