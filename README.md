@@ -59,13 +59,6 @@ log.Listen<ChatMessage>(chat =>
 If you are seeing an error similar to this, try changing your project's targeted .NET Framework version [[#11]](https://github.com/ScottKaye/CoreRCON/issues/11).  If you are using Visual Studio 2015, the minimum resolvable framework version is **4.7**.  Visual Studio 2017 has improved support for .NET Core packages, allowing CoreRCON to resolve for versions as low as **4.6.1**.
 
 ## Changelog
-### Version 4.0.0
-* Rewrote RCON client to use Pipeline networking
-* Add support for  multi-packet responses using [Koraktors trick](https://developer.valvesoftware.com/wiki/Source_RCON_Protocol#Multiple-packet_Responses)
-* ConnectAsync now has to be called after construction. 
-### Version 3.0.0
-* [Supports Minecraft](https://github.com/ScottKaye/CoreRCON/pull/7)
-* Some [`ServerQuery`](https://github.com/ScottKaye/CoreRCON/blob/master/src/CoreRCON/ServerQuery.cs#L17) methods now require a server type to differentiate between Source and Minecraft
-
+See [Github Releases](https://github.com/Challengermode/CoreRcon/releases/tag/v5.2.0)
 
 Big thanks to [ScottKaye](https://github.com/ScottKaye) for developing the [original version](https://github.com/ScottKaye/CoreRCON)

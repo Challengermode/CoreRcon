@@ -19,10 +19,9 @@
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
     <Version>5.2.0</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <AssemblyVersion>5.1.0</AssemblyVersion>
+    <AssemblyVersion>5.2.0</AssemblyVersion>
     <FileVersion>5.1.0.0</FileVersion>
-    <PackageReleaseNotes>Observer exceptions correctly.
-Support larger </PackageReleaseNotes>
+    <PackageReleaseNotes>https://github.com/Challengermode/CoreRcon/releases</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>logo.png</PackageIcon>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
