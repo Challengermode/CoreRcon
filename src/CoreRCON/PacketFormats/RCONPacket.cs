@@ -41,7 +41,6 @@ namespace CoreRCON.PacketFormats
         {
             if (buffer == null) throw new NullReferenceException("Byte buffer cannot be null.");
             if (buffer.Length < 4) throw new InvalidDataException("Buffer does not contain a size field.");
-            if (buffer.Length > Constants.MAX_PACKET_SIZE) throw new InvalidDataException("Buffer is too large for an RCON packet.");
 
             int size = BitConverter.ToInt32(buffer, 0);
             if (size > buffer.Length - 4) throw new InvalidDataException("Packet size specified was larger then buffer");
