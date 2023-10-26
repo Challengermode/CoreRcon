@@ -3,9 +3,8 @@
   <PropertyGroup>
     <Description>A .NET Standard implementation of the Source RCON Protocol.</Description>
     <AssemblyTitle>CoreRCON</AssemblyTitle>
-    <VersionPrefix>2.0.0</VersionPrefix>
     <Authors>Alexander Westberg-Bladh Scott Kaye</Authors>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <AssemblyName>CoreRCON</AssemblyName>
     <OutputType>Library</OutputType>
     <PackageId>CoreRCON</PackageId>
@@ -20,21 +19,14 @@
     <Version>5.2.0</Version>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <AssemblyVersion>5.2.0</AssemblyVersion>
-    <FileVersion>5.2.0.0</FileVersion>
+    <FileVersion>$(AssemblyVersion)</FileVersion>
     <PackageReleaseNotes>https://github.com/Challengermode/CoreRcon/releases</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>logo.png</PackageIcon>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <LangVersion>7.2</LangVersion>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <LangVersion>7.2</LangVersion>
-  </PropertyGroup>
+    <LangVersion>latest</LangVersion>
+</PropertyGroup>
 
   <Target Name="PostcompileScript" AfterTargets="Build" Condition=" '$(IsCrossTargetingBuild)' != 'true' ">
     <Exec Command="dotnet pack --no-build --configuration $(Configuration)" />
