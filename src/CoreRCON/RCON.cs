@@ -14,7 +14,7 @@ using Microsoft.Extensions.Logging;
 
 namespace CoreRCON
 {
-    public sealed class RCON : IDisposable
+    public partial class RCON : IDisposable
     {
         internal static string Identifier = "";
 
@@ -252,13 +252,22 @@ namespace CoreRCON
 
         public void Dispose()
         {
-            _connected = false;
-            _semaphoreSlim?.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
-            if (_tcp != null)
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
             {
-                _tcp.Shutdown(SocketShutdown.Both);
-                _tcp.Dispose();
+                _connected = false;
+                _semaphoreSlim?.Dispose();
+
+                if (_tcp != null)
+                {
+                    _tcp.Shutdown(SocketShutdown.Both);
+                    _tcp.Dispose();
+                }
             }
         }
 
