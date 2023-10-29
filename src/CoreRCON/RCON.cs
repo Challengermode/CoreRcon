@@ -58,7 +58,7 @@ namespace CoreRCON
         /// </summary>
         /// <param name="host">Server address</param>
         /// <param name="port">Server port</param>
-        public RCON(IPAddress host, ushort port, string password, uint timeout = 10000, 
+        public RCON(IPAddress host, ushort port, string password, uint timeout = 10000,
             bool sourceMultiPacketSupport = false, ILogger logger = null)
             : this(new IPEndPoint(host, port), password, timeout, sourceMultiPacketSupport, logger)
         { }
@@ -71,9 +71,9 @@ namespace CoreRCON
         /// <param name="timeout">Timeout to connect and send messages in milliseconds. A value of 0 means no timeout</param>
         /// <param name="sourceMultiPacketSupport">Enable source engine trick to receive multi packet responses using trick by Koraktor</param>
         /// <param name="logger">Logger to use, null means none</param>
-        public RCON(IPEndPoint endpoint, string password, 
-            uint timeout = 10000, 
-            bool sourceMultiPacketSupport = false, 
+        public RCON(IPEndPoint endpoint, string password,
+            uint timeout = 10000,
+            bool sourceMultiPacketSupport = false,
             ILogger logger = null)
         {
             _endpoint = endpoint;
@@ -252,9 +252,23 @@ namespace CoreRCON
 
         public void Dispose()
         {
-            _connected = false;
-            _tcp.Shutdown(SocketShutdown.Both);
-            _tcp.Dispose();
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _connected = false;
+                _semaphoreSlim?.Dispose();
+
+                if (_tcp != null)
+                {
+                    _tcp.Shutdown(SocketShutdown.Both);
+                    _tcp.Dispose();
+                }
+            }
         }
 
         /// <summary>
