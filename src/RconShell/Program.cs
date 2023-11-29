@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using CoreRCON;
-using CoreRCON.PacketFormats;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -44,33 +42,46 @@ namespace RconShell
 
         static async Task Main(string[] args)
         {
-            var serviceProvider = new ServiceCollection()
-                 .AddLogging(builder => {
-                     builder.SetMinimumLevel(LogLevel.Debug);
-                 })
-                 .BuildServiceProvider();
 
-            string ip;
-            int port;
+
+            string host;
+            int port = 0;
             string password;
 
-            Console.WriteLine("Enter ip");
-            ip = Console.ReadLine();
-            Console.WriteLine("Enter port");
-            port = int.Parse(Console.ReadLine());
+            Console.WriteLine("Enter Server Host/Ip");
+
+            host = Console.ReadLine();
+
+            // Split host and port
+            if (host.Contains(":"))
+            {
+                var split = host.Split(':');
+                host = split[0];
+                port = int.Parse(split[1]);
+            }
+
+            // Resolve host
+            var addresses = await Dns.GetHostAddressesAsync(host);
+
+            if (port == 0)
+            {
+                Console.WriteLine("Enter port (default 27055))");
+                port = int.Parse(Console.ReadLine() ?? "27055");
+            }
             Console.WriteLine("Enter password");
             password = Console.ReadLine();
 
             var endpoint = new IPEndPoint(
-                IPAddress.Parse(ip),
+                addresses.First(),
                 port
             );
 
-            rcon = new RCON(endpoint, password, 0, logger:  serviceProvider.GetService<ILogger<RCON>>());
+            rcon = new RCON(endpoint, password, 0);
             await rcon.ConnectAsync();
             bool connected = true;
             Console.WriteLine("Connected");
 
+            Console.WriteLine("You can now enter commands to send to server:");
             rcon.OnDisconnected += () =>
             {
                 Console.WriteLine("RCON Disconnected");
