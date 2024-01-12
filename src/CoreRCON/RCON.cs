@@ -278,10 +278,10 @@ namespace CoreRCON
         /// <param name="command">Command to send to the server.</param>
         /// <exception cref = "System.FormatException" > Unable to parse response </ exception >
         /// <exception cref = "System.AggregateException" >Connection exceptions</ exception >
-        public async Task<T> SendCommandAsync<T>(string command)
+        public async Task<T> SendCommandAsync<T>(string command, int? overrideTimeout = null)
             where T : class, IParseable, new()
         {
-            string response = await SendCommandAsync(command).ConfigureAwait(false);
+            string response = await SendCommandAsync(command, overrideTimeout).ConfigureAwait(false);
             // Se comment about TaskCreationOptions.RunContinuationsAsynchronously in SendComandAsync<string>
             var source = new TaskCompletionSource<T>();
             var instance = ParserHelpers.CreateParser<T>();
@@ -304,7 +304,7 @@ namespace CoreRCON
         /// </summary>
         /// <param name="command">Command to send to the server.</param>
         /// <exception cref = "System.AggregateException" >Connection exceptions</ exception >
-        public async Task<string> SendCommandAsync(string command)
+        public async Task<string> SendCommandAsync(string command, int ? overrideTimeout = null)
         {
 
             // This TaskCompletion source could be initialized with TaskCreationOptions.RunContinuationsAsynchronously
@@ -320,14 +320,13 @@ namespace CoreRCON
             RCONPacket packet = new RCONPacket(packetId, PacketType.ExecCommand, command);
             // ensuer mutal execution of SendPacketAsync and RCONPacketReceived
 
-
             await _semaphoreSlim.WaitAsync();
             Task completedTask;
             try
             {
                 await SendPacketAsync(packet).ConfigureAwait(false);
                 completedTask = await Task.WhenAny(completionSource.Task, _socketWriter, _socketReader)
-                    .TimeoutAfter(TimeSpan.FromMilliseconds(_timeout))
+                    .TimeoutAfter(TimeSpan.FromMilliseconds(overrideTimeout.HasValue ? overrideTimeout.Value : _timeout))
                     .ConfigureAwait(false);
             }
             catch (TimeoutException)
