@@ -278,7 +278,7 @@ namespace CoreRCON
         /// <param name="command">Command to send to the server.</param>
         /// <exception cref = "System.FormatException" > Unable to parse response </ exception >
         /// <exception cref = "System.AggregateException" >Connection exceptions</ exception >
-        public async Task<T> SendCommandAsync<T>(string command, int? overrideTimeout = null)
+        public async Task<T> SendCommandAsync<T>(string command, TimeSpan? overrideTimeout = null)
             where T : class, IParseable, new()
         {
             string response = await SendCommandAsync(command, overrideTimeout).ConfigureAwait(false);
@@ -304,7 +304,7 @@ namespace CoreRCON
         /// </summary>
         /// <param name="command">Command to send to the server.</param>
         /// <exception cref = "System.AggregateException" >Connection exceptions</ exception >
-        public async Task<string> SendCommandAsync(string command, int ? overrideTimeout = null)
+        public async Task<string> SendCommandAsync(string command, TimeSpan? overrideTimeout = null)
         {
 
             // This TaskCompletion source could be initialized with TaskCreationOptions.RunContinuationsAsynchronously
@@ -326,7 +326,7 @@ namespace CoreRCON
             {
                 await SendPacketAsync(packet).ConfigureAwait(false);
                 completedTask = await Task.WhenAny(completionSource.Task, _socketWriter, _socketReader)
-                    .TimeoutAfter(TimeSpan.FromMilliseconds(overrideTimeout.HasValue ? overrideTimeout.Value : _timeout))
+                    .TimeoutAfter(overrideTimeout.HasValue ? overrideTimeout.Value : TimeSpan.FromMilliseconds(_timeout))
                     .ConfigureAwait(false);
             }
             catch (TimeoutException)
