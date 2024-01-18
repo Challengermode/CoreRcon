@@ -4,7 +4,7 @@
     <Description>A .NET Standard implementation of the Source RCON Protocol.</Description>
     <AssemblyTitle>CoreRCON</AssemblyTitle>
     <Authors>Alexander Westberg-Bladh Scott Kaye</Authors>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1</TargetFrameworks>
     <AssemblyName>CoreRCON</AssemblyName>
     <OutputType>Library</OutputType>
     <PackageId>CoreRCON</PackageId>

@@ -10,7 +10,7 @@ using CoreRCON.PacketFormats;
 namespace CoreRCON
 {
     /// <summary>
-    /// Make a request to a server following the Source and Minecraft Server Query format.
+    /// Make a Request to a server following the Source and Minecraft Server Query format.
     /// </summary>
     /// <see cref="https://developer.valvesoftware.com/wiki/Server_queries"/>
     /// <see cref="http://wiki.vg/Query"/>
@@ -66,7 +66,7 @@ namespace CoreRCON
                     case ServerType.Source:
                         await _client.SendAsync(_asInfoPayload, _asInfoPayload.Length, host);
                         UdpReceiveResult sourceResponse = await _client.ReceiveAsync();
-                        // If Server responds with a Challenge number we need to resend the request with that number
+                        // If Server responds with a Challenge number we need to resend the Request with that number
                         if (sourceResponse.Buffer.ToArray().Take(_asInfochallengeResponse.Length).SequenceEqual(_asInfochallengeResponse))
                         {
                             byte[] challenge = _asInfoPayload.Concat(sourceResponse.Buffer.Skip(5).Take(4)).ToArray();
@@ -106,7 +106,7 @@ namespace CoreRCON
         }
 
         /// <summary>
-        /// Send a challenge request to the server and receive a code.
+        /// Send a challenge Request to the server and receive a code.
         /// </summary>
         /// <param name="host">Endpoint of the server.</param>
         /// <returns>Challenge code to use with challenged requests.</returns>
@@ -118,7 +118,7 @@ namespace CoreRCON
                     await _client.SendAsync(new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0x55, 0xFF, 0xFF, 0xFF, 0xFF }, 9, host);
                     return (await _client.ReceiveAsync()).Buffer.Skip(5).Take(4).ToArray();
                 case ServerType.Minecraft:
-                    // Create request
+                    // Create Request
                     var datagram = _magic.Concat(new[] { (byte)PacketType.Handshake }).Concat(_sessionid).ToArray();
                     await _client.SendAsync(datagram, datagram.Length, host);
 

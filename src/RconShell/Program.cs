@@ -5,8 +5,6 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using CoreRCON;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 /*
  * Simple Interactive RCON shell
@@ -17,7 +15,7 @@ namespace RconShell
 {
     class Program
     {
-        static RCON rcon;
+        static RconClient rcon;
         const int ThreadCount = 10;
         const int MessageCount = 10;
         static int completed = 0;
@@ -76,8 +74,8 @@ namespace RconShell
                 port
             );
 
-            rcon = new RCON(endpoint, password, 0);
-            await rcon.ConnectAsync();
+            rcon = new RconClient();
+            await rcon.ConnectAsync(endpoint);
             bool connected = true;
             Console.WriteLine("Connected");
 

@@ -137,7 +137,7 @@ namespace CoreRCON
                 var resultTask = await Task.WhenAny(task, delayTask);
                 if (resultTask == delayTask)
                 {
-                    // Operation cancelled
+                    // RconRequest cancelled
                     throw new TimeoutException();
                 }
                 else
