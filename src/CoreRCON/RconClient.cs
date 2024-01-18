@@ -19,9 +19,6 @@ namespace CoreRCON;
 
 public class RconClient : IDisposable
 {
-    private const int BaseSize = sizeof(int) * 2 + sizeof(byte) * 2;
-    private const int MinimumBufferSize = sizeof(int) + BaseSize;
-
     // Map of pending command references.
     // These are called when a command with the matching Id (key) is received.
     // Commands are called only once.
@@ -218,7 +215,7 @@ public class RconClient : IDisposable
     {
         while (true)
         {
-            ReadResult readResult = await reader.ReadAtLeastAsync(MinimumBufferSize, cancellationToken);
+            ReadResult readResult = await reader.ReadAtLeastAsync(Constants.MAX_PACKET_SIZE, cancellationToken);
             ReadOnlySequence<byte> buffer = readResult.Buffer;
             SequencePosition startPosition = buffer.Start;
             if (buffer.Length < 4) // not enough bytes to get the packet length, need to read more
@@ -298,7 +295,7 @@ public class RconClient : IDisposable
     {
         while (true)
         {
-            var buffer = writer.GetMemory(14);
+            var buffer = writer.GetMemory(Constants.MIN_PACKET_SIZE);
             try
             {
                 var bytesCount = await _client.ReceiveAsync(buffer);
@@ -324,7 +321,6 @@ public class RconClient : IDisposable
         // Tell the _pipe reader that there's no more data coming
         await writer.CompleteAsync();
     }
-
 }
 
 public class RconRequest(RconPacket request, bool multiPacket = false)

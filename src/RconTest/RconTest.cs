@@ -29,7 +29,7 @@ public class RconTest
     //Connection settings for server
     private readonly IPAddress _ip = IPAddress.Parse("212.102.62.201");
     private readonly ushort _port = 26795;
-    private readonly string _password = "o8A2W6I6C5I1h0";
+    private readonly string _password = "rcon";
 
     [TestCleanup]
     public void testClean()

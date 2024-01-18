@@ -23,15 +23,12 @@ namespace CoreRCON.PacketFormats
             //Should also be compatible with ASCII only servers
             int bodyLength = encoding.GetByteCount(packet.Body);
 
-            int headerSize = sizeof(int) * 2 + sizeof(byte) * 2;
-            int minimumBufferSize = sizeof(int) + headerSize;
-
-            byte[] buffer = new byte[minimumBufferSize + bodyLength];
+            byte[] buffer = new byte[Constants.MIN_PACKET_SIZE + bodyLength];
 
             using var stream = new MemoryStream(buffer);
             using var writer = new BinaryWriter(stream, encoding);
 
-            writer.Write(headerSize + bodyLength); // Size of rest of the message
+            writer.Write(Constants.HEADER_SIZE + bodyLength); // Size of rest of the message
             writer.Write(packet.Id); // ID
             writer.Write((int)packet.Type); // Type
 

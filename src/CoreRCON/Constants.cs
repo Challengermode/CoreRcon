@@ -12,5 +12,11 @@
         /// Minimum size of a rcon packet
         /// </summary>
         internal const int MIN_PACKET_SIZE = 14;
+
+
+        /// <summary>
+        /// Size of a rcon packet header
+        /// </summary>
+        internal const int HEADER_SIZE = 10;
     }
 }
