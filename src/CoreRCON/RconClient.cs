@@ -166,7 +166,7 @@ public class RconClient : IDisposable
         try
         {
             // Ensure mutual execution of SendToServer
-            int packetId = rnd.Next();//Interlocked.Increment(ref _packetId);
+            int packetId = Interlocked.Increment(ref _packetId);
             RconPacket packet = new RconPacket(packetId, PacketType.ExecCommand, command);
 
             return await SendPacketAsync(packet, multipacket, overrideTimeout).ConfigureAwait(false);
