@@ -396,6 +396,10 @@ namespace CoreRCON
                     _pendingCommands.TryRemove(packet.Id, out _);
                 }
             }
+            else
+            {
+                _logger?.LogWarning("Received packet with no matching command id: {} body: {}", packet.Id, packet.Body);
+            }
 
             OnPacketReceived?.Invoke(packet);
         }
