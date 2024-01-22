@@ -14,32 +14,43 @@ using Microsoft.Extensions.Logging;
 
 namespace CoreRCON
 {
-    public partial class RCON : IDisposable
+    /// <summary>
+    /// Create RCON object 
+    /// </summary>
+    /// <param name="endpoint">Server to connect to</param>
+    /// <param name="password">Rcon password</param>
+    /// <param name="timeout">Timeout to connect and send messages in milliseconds. A value of 0 means no timeout</param>
+    /// <param name="sourceMultiPacketSupport">Enable source engine trick to receive multi packet responses using trick by Koraktor</param>
+    /// <param name="logger">Logger to use, null means none</param>
+    public partial class RCON(
+        IPEndPoint endpoint, 
+        string password,
+        uint timeout = 10000,
+        bool sourceMultiPacketSupport = false,
+        ILogger logger = null) : IDisposable
     {
-        internal static string Identifier = "";
-
         // Allows us to keep track of when authentication succeeds, so we can block Connect from returning until it does.
         private TaskCompletionSource<bool> _authenticationTask;
 
         private bool _connected = false;
 
-        private IPEndPoint _endpoint;
+        private readonly IPEndPoint _endpoint = endpoint;
 
         // When generating the packet ID, use a never-been-used (for automatic packets) ID.
         private int _packetId = 1;
 
-        private string _password;
-        private int _timeout;
-        private bool _multiPacket;
+        private readonly string _password = password;
+        private readonly int _timeout = (int)timeout;
+        private readonly bool _multiPacket = sourceMultiPacketSupport;
 
         // Map of pending command references.  These are called when a command with the matching Id (key) is received.  Commands are called only once.
         private ConcurrentDictionary<int, TaskCompletionSource<string>> _pendingCommands { get; } = new ConcurrentDictionary<int, TaskCompletionSource<string>>();
-        private Dictionary<int, string> _incomingBuffer { get; } = new Dictionary<int, string>();
+        private Dictionary<int, string> _incomingBuffer { get; } = [];
 
         private Socket _tcp { get; set; }
 
-        private readonly ILogger _logger;
-        SemaphoreSlim _semaphoreSlim;
+        private readonly ILogger _logger = logger;
+        readonly SemaphoreSlim _semaphoreSlim = new(1, 1);
         private Task _socketWriter;
         private Task _socketReader;
 
@@ -64,28 +75,6 @@ namespace CoreRCON
         { }
 
         /// <summary>
-        /// Create RCON object 
-        /// </summary>
-        /// <param name="endpoint">Server to connect to</param>
-        /// <param name="password">Rcon password</param>
-        /// <param name="timeout">Timeout to connect and send messages in milliseconds. A value of 0 means no timeout</param>
-        /// <param name="sourceMultiPacketSupport">Enable source engine trick to receive multi packet responses using trick by Koraktor</param>
-        /// <param name="logger">Logger to use, null means none</param>
-        public RCON(IPEndPoint endpoint, string password,
-            uint timeout = 10000,
-            bool sourceMultiPacketSupport = false,
-            ILogger logger = null)
-        {
-            _endpoint = endpoint;
-            _password = password;
-            _timeout = (int)timeout;
-            _multiPacket = sourceMultiPacketSupport;
-            _logger = logger;
-            // Limit SenConcurrency to 1 to avoid issue with server not handling it well
-            _semaphoreSlim = new SemaphoreSlim(1, 1);
-        }
-
-        /// <summary>
         /// Connect to a server through RCON.  Automatically sends the authentication packet.
         /// </summary>
         /// <returns>Awaitable which will complete when a successful connection is made and authentication is successful.</returns>
@@ -95,10 +84,12 @@ namespace CoreRCON
             {
                 return;
             }
-            _tcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            _tcp.ReceiveTimeout = _timeout;
-            _tcp.SendTimeout = _timeout;
-            _tcp.NoDelay = true;
+            _tcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
+            {
+                ReceiveTimeout = _timeout,
+                SendTimeout = _timeout,
+                NoDelay = true
+            };
             await _tcp.ConnectAsync(_endpoint)
                 .ConfigureAwait(false);
             _connected = true;
@@ -287,12 +278,11 @@ namespace CoreRCON
             var instance = ParserHelpers.CreateParser<T>();
             var container = new ParserContainer
             {
-                IsMatch = line => instance.IsMatch(line),
-                Parse = line => instance.Parse(line),
+                IsMatch = instance.IsMatch,
+                Parse = instance.Parse,
             };
 
-            object parsed;
-            if (!container.TryParse(response, out parsed))
+            if (!container.TryParse(response, out var parsed))
             {
                 throw new FormatException("Failed to parse server response");
             }
@@ -357,15 +347,14 @@ namespace CoreRCON
         /// <param name="packet"> Newly received packet </param>
         private void RCONPacketReceived(RCONPacket packet)
         {
-            _logger?.LogTrace("RCON packet received: {0}", packet.Id);
+            _logger?.LogTrace("RCON packet received: {}", packet.Id);
             // Call pending result and remove from map
             if (_pendingCommands.TryGetValue(packet.Id, out TaskCompletionSource<string> taskSource))
             {
                 if (_multiPacket)
                 {
                     //Read any previous messages 
-                    string body;
-                    _incomingBuffer.TryGetValue(packet.Id, out body);
+                    _incomingBuffer.TryGetValue(packet.Id, out string body);
 
                     if (packet.Body == "")
                     {
@@ -397,7 +386,7 @@ namespace CoreRCON
         /// <param name="packet">Packet to send, which will be serialized.</param>
         private async Task SendPacketAsync(RCONPacket packet)
         {
-            _logger?.LogTrace("Send packet: {0}", packet.Id);
+            _logger?.LogTrace("Send packet: {}", packet.Id);
             if (!_connected) throw new InvalidOperationException("Connection is closed.");
             await _tcp.SendAsync(new ArraySegment<byte>(packet.ToBytes()), SocketFlags.None)
                 .ConfigureAwait(false);
@@ -418,7 +407,7 @@ namespace CoreRCON
                 _logger?.LogError("RCON connection closed");
                 if (task.IsFaulted)
                 {
-                    _logger?.LogError($"Exception {task.Exception.Message}");
+                    _logger?.LogError(task.Exception, "conection closed due to exception");
                 }
             }
         }
