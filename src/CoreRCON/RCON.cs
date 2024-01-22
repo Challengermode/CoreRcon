@@ -24,15 +24,12 @@ namespace CoreRCON
     /// <param name="sourceMultiPacketSupport">Enable source engine trick to receive multi packet responses using trick by Koraktor</param>
     /// <param name="logger">Logger to use, null means none</param>
     public partial class RCON(
-        IPEndPoint endpoint, 
+        IPEndPoint endpoint,
         string password,
         uint timeout = 10000,
         bool sourceMultiPacketSupport = false,
         ILogger logger = null) : IDisposable
     {
-
-        private static readonly ActivitySource _activitySource = new ("CoreRcon.Rcon");
-
         // Allows us to keep track of when authentication succeeds, so we can block Connect from returning until it does.
         private TaskCompletionSource<bool> _authenticationTask;
 
@@ -89,9 +86,9 @@ namespace CoreRCON
                 return;
             }
 
-            using var activity = _activitySource.StartActivity("Connect");
-            activity?.AddTag("host", _endpoint.Address.ToString());
-            activity?.AddTag("port", _endpoint.Port.ToString());
+            using var activity = Tracing.ActivitySource.StartActivity("Connect");
+            activity?.AddTag(Tracing.Tags.Address, _endpoint.Address.ToString());
+            activity?.AddTag(Tracing.Tags.Port, _endpoint.Port.ToString());
 
             _tcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
             {
@@ -317,13 +314,13 @@ namespace CoreRCON
                 throw new SocketException();
             }
 
-            using var activity = _activitySource.StartActivity("SendCommand");
-            activity?.AddTag("host", _endpoint.Address.ToString());
-            activity?.AddTag("port", _endpoint.Port.ToString());
-            activity?.AddTag("packetId", packetId);
-            activity?.AddTag("command_length", command.Length);
-            activity?.AddTag("command_count", command.Count(c => c == ';'));
-            activity?.AddTag("command_first", new string(command.TakeWhile(c => c != ' ').ToArray()));
+            using var activity = Tracing.ActivitySource.StartActivity("SendCommand");
+            activity?.AddTag(Tracing.Tags.Address, _endpoint.Address.ToString());
+            activity?.AddTag(Tracing.Tags.Port, _endpoint.Port.ToString());
+            activity?.AddTag(Tracing.Tags.PacketId, packetId);
+            activity?.AddTag(Tracing.Tags.CommandLength, command.Length);
+            activity?.AddTag(Tracing.Tags.CommandCount, command.Count(c => c == ';'));
+            activity?.AddTag(Tracing.Tags.CommandFirst, new string(command.TakeWhile(c => c != ' ').ToArray()));
 
             RCONPacket packet = new RCONPacket(packetId, PacketType.ExecCommand, command);
 
@@ -351,7 +348,7 @@ namespace CoreRCON
             if (completedTask == completionSource.Task)
             {
                 string response = await completionSource.Task;
-                activity?.AddTag("response_length", response.Length);
+                activity?.AddTag(Tracing.Tags.ResponseLength, response.Length);
                 return response;
             }
 
