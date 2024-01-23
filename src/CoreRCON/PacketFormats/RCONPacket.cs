@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.IO;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -11,24 +13,17 @@ using System.Text.RegularExpressions;
 /// </summary>
 namespace CoreRCON.PacketFormats
 {
-    public class RCONPacket
+    /// <summary>
+    /// Create a new packet.
+    /// </summary>
+    /// <param name="id">Some kind of identifier to keep track of responses from the server.</param>
+    /// <param name="type">What the server is supposed to do with the body of this packet.</param>
+    /// <param name="body">The actual information held within.</param>
+    public class RCONPacket(int id, PacketType type, string body)
     {
-        public string Body { get; private set; }
-        public int Id { get; private set; }
-        public PacketType Type { get; private set; }
-
-        /// <summary>
-        /// Create a new packet.
-        /// </summary>
-        /// <param name="id">Some kind of identifier to keep track of responses from the server.</param>
-        /// <param name="type">What the server is supposed to do with the body of this packet.</param>
-        /// <param name="body">The actual information held within.</param>
-        public RCONPacket(int id, PacketType type, string body)
-        {
-            Id = id;
-            Type = type;
-            Body = body;
-        }
+        public string Body { get; private set; } = body;
+        public int Id { get; private set; } = id;
+        public PacketType Type { get; private set; } = type;
 
         public override string ToString() => Body;
 
@@ -42,21 +37,22 @@ namespace CoreRCON.PacketFormats
             if (buffer == null) throw new NullReferenceException("Byte buffer cannot be null.");
             if (buffer.Length < 4) throw new InvalidDataException("Buffer does not contain a size field.");
 
-            int size = BitConverter.ToInt32(buffer, 0);
+            ReadOnlySpan<byte> bufferSpan = buffer;
+            int size = BinaryPrimitives.ReadInt32LittleEndian(bufferSpan.Slice(0, 4));
             if (size > buffer.Length - 4) throw new InvalidDataException("Packet size specified was larger then buffer");
 
             if (size < 10) throw new InvalidDataException("Packet received was invalid.");
 
-            int id = BitConverter.ToInt32(buffer, 4);
-            PacketType type = (PacketType)BitConverter.ToInt32(buffer, 8);
+            int id = BinaryPrimitives.ReadInt32LittleEndian(bufferSpan.Slice(4, 4));
+            PacketType type = (PacketType)BinaryPrimitives.ReadInt32LittleEndian(bufferSpan.Slice(8, 4));
 
             try
             {
                 // Some games support UTF8 payloads, ASCII will also work due to backwards compatiblity
-                char[] rawBody = Encoding.UTF8.GetChars(buffer, 12, size - 10);
-                string body = new string(rawBody).TrimEnd();
-                // Force Line endings to match environment
-                body = Regex.Replace(body, @"\r\n|\n\r|\n|\r", "\r\n");
+                string body = Encoding.UTF8.GetString(buffer, 12, size - 10)
+                    .TrimEnd()
+                    .Normalize();
+
                 return new RCONPacket(id, type, body);
             }
             catch (Exception ex)
@@ -72,20 +68,30 @@ namespace CoreRCON.PacketFormats
         /// <returns>Byte array with each field.</returns>
         internal byte[] ToBytes()
         {
-            //Should also be compatible with ASCII only servers
-            byte[] body = Encoding.UTF8.GetBytes(Body + "\0");
-            int bodyLength = body.Length;
+            int bodyLength = Encoding.UTF8.GetByteCount(Body) + 1;
+            int totalLength = Constants.PACKET_HEADER_SIZE + bodyLength;
+            byte[] packetBytes = new byte[totalLength];
+            Span<byte> packetSpan = packetBytes;
 
-            using (var packet = new MemoryStream(12 + bodyLength))
-            {
-                packet.Write(BitConverter.GetBytes(9 + bodyLength), 0, 4);
-                packet.Write(BitConverter.GetBytes(Id), 0, 4);
-                packet.Write(BitConverter.GetBytes((int)Type), 0, 4);
-                packet.Write(body, 0, bodyLength);
-                packet.Write(new byte[] { 0 }, 0, 1);
+            // Write packet size
+            // Packet size parameter does not include the size of the size parameter itself
+            BinaryPrimitives.WriteInt32LittleEndian(packetSpan, totalLength - 4);
+            packetSpan = packetSpan.Slice(4);
 
-                return packet.ToArray();
-            }
+            // Write ID
+            BinaryPrimitives.WriteInt32LittleEndian(packetSpan, Id);
+            packetSpan = packetSpan.Slice(4);
+
+            // Write type
+            BinaryPrimitives.WriteInt32LittleEndian(packetSpan, (int)Type);
+            packetSpan = packetSpan.Slice(4);
+
+            // Write body
+            Encoding.UTF8.GetBytes(Body, 0, Body.Length, packetBytes, Constants.PACKET_HEADER_SIZE);
+            packetSpan[bodyLength - 1] = 0; // Null terminator for the body
+            packetBytes[totalLength - 1] = 0; // Null terminator for the package
+
+            return packetBytes;
         }
     }
 }

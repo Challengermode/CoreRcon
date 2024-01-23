@@ -44,6 +44,7 @@
 
         public static SourceQueryInfo FromBytes(byte[] buffer)
         {
+            // Todo: Use Span & BinaryPrimitives
             int i = 6;
             return new SourceQueryInfo
             {
