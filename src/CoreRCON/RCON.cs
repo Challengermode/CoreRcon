@@ -38,7 +38,7 @@ namespace CoreRCON
         private readonly IPEndPoint _endpoint = endpoint;
 
         // When generating the packet ID, use a never-been-used (for automatic packets) ID.
-        private int _packetId = 1;
+        private int _packetId = 0;
 
         private readonly string _password = password;
         private readonly int _timeout = (int)timeout;
