@@ -215,9 +215,11 @@ namespace CoreRCON
                             // Tell Connect that authentication succeeded
                             _authenticationTask.SetResult(true);
                         }
-
-                        // Forward rcon packet to handler
-                        RCONPacketReceived(packet);
+                        else
+                        {
+                            // Forward rcon packet to handler
+                            RCONPacketReceived(packet);
+                        }
 
                         reader.AdvanceTo(packetEnd);
                     }
