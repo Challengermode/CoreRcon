@@ -375,7 +375,7 @@ namespace CoreRCON
                     //Read any previous messages 
                     _incomingBuffer.TryGetValue(packet.Id, out string body);
 
-                    if (packet.Body == "\0\u0001\0\0")
+                    if (packet.Body == Constants.MULTI_PACKET_END_RESPONSE)
                     {
                         //Avoid yielding
                         taskSource.SetResult(body ?? string.Empty);

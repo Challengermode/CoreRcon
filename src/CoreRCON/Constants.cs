@@ -17,5 +17,11 @@
         /// The size of the header of an RCON packet.
         /// </summary>
         internal const int PACKET_HEADER_SIZE = 12;
+
+        /// <summary>
+        /// Special response value when you send a Response.Response to the server.
+        /// Used to finde the end of a multi packet response.
+        /// </summary>
+        internal const string MULTI_PACKET_END_RESPONSE = "\0\u0001\0\0";
     }
 }
