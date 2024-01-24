@@ -86,7 +86,7 @@ namespace CoreRCON
                 return;
             }
 
-            using var activity = Tracing.ActivitySource.StartActivity("Connect");
+            using var activity = Tracing.ActivitySource.StartActivity("Connect", ActivityKind.Client);
             activity?.AddTag(Tracing.Tags.Address, _endpoint.Address.ToString());
             activity?.AddTag(Tracing.Tags.Port, _endpoint.Port.ToString());
 
@@ -316,7 +316,7 @@ namespace CoreRCON
                 throw new SocketException();
             }
 
-            using var activity = Tracing.ActivitySource.StartActivity("SendCommand");
+            using var activity = Tracing.ActivitySource.StartActivity("SendCommand", ActivityKind.Client);
             activity?.AddTag(Tracing.Tags.Address, _endpoint.Address.ToString());
             activity?.AddTag(Tracing.Tags.Port, _endpoint.Port.ToString());
             activity?.AddTag(Tracing.Tags.PacketId, packetId);
