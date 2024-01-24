@@ -10,7 +10,7 @@ namespace CoreRCON
         private static readonly Version AssemblyVersion = typeof(RCON).Assembly.GetName().Version;
         private static string LibraryVersion => $"{AssemblyVersion.Major}.{AssemblyVersion.Minor}.{AssemblyVersion.Build}";
 
-        public static readonly ActivitySource ActivitySource = new("CoreRcon.Rcon", LibraryVersion);
+        public static readonly ActivitySource ActivitySource = new("CoreRcon.RconClient", LibraryVersion);
 
 
         public static class Tags
