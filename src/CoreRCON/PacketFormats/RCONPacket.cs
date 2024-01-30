@@ -68,8 +68,8 @@ namespace CoreRCON.PacketFormats
         /// <returns>Byte array with each field.</returns>
         internal byte[] ToBytes()
         {
-            int bodyLength = Encoding.UTF8.GetByteCount(Body) + 1;
-            int totalLength = Constants.PACKET_HEADER_SIZE + bodyLength;
+            int bodyLength = Encoding.UTF8.GetByteCount(Body);
+            int totalLength = Constants.PACKET_HEADER_SIZE + bodyLength + Constants.PACKET_PADDING_SIZE;
             byte[] packetBytes = new byte[totalLength];
             Span<byte> packetSpan = packetBytes;
 
@@ -88,7 +88,7 @@ namespace CoreRCON.PacketFormats
 
             // Write body
             Encoding.UTF8.GetBytes(Body, 0, Body.Length, packetBytes, Constants.PACKET_HEADER_SIZE);
-            packetSpan[bodyLength - 1] = 0; // Null terminator for the body
+            packetSpan[bodyLength] = 0; // Null terminator for the body
             packetBytes[totalLength - 1] = 0; // Null terminator for the package
 
             return packetBytes;
