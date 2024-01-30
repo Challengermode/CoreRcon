@@ -28,6 +28,7 @@ namespace CoreRCON
         string password,
         uint timeout = 10000,
         bool sourceMultiPacketSupport = false,
+        bool strictCommandPacketIdMatching = true,
         ILogger logger = null) : IDisposable
     {
         // Allows us to keep track of when authentication succeeds, so we can block Connect from returning until it does.
@@ -71,8 +72,8 @@ namespace CoreRCON
         /// <param name="host">Server address</param>
         /// <param name="port">Server port</param>
         public RCON(IPAddress host, ushort port, string password, uint timeout = 10000,
-            bool sourceMultiPacketSupport = false, ILogger logger = null)
-            : this(new IPEndPoint(host, port), password, timeout, sourceMultiPacketSupport, logger)
+            bool sourceMultiPacketSupport = false, bool strictCommandPacketIdMatching = true, ILogger logger = null)
+            : this(new IPEndPoint(host, port), password, timeout, sourceMultiPacketSupport,strictCommandPacketIdMatching, logger)
         { }
 
         /// <summary>
@@ -316,6 +317,7 @@ namespace CoreRCON
                 throw new SocketException();
             }
 
+
             using var activity = Tracing.ActivitySource.StartActivity("SendCommand", ActivityKind.Client);
             activity?.AddTag(Tracing.Tags.Address, _endpoint.Address.ToString());
             activity?.AddTag(Tracing.Tags.Port, _endpoint.Port.ToString());
@@ -367,39 +369,48 @@ namespace CoreRCON
         private void RCONPacketReceived(RCONPacket packet)
         {
             _logger?.LogTrace("RCON packet received: {}", packet.Id);
+            
+            TaskCompletionSource<string> taskSource;
             // Call pending result and remove from map
-            if (_pendingCommands.TryGetValue(packet.Id, out TaskCompletionSource<string> taskSource))
+            if (!_pendingCommands.TryGetValue(packet.Id, out taskSource))
             {
-                if (_multiPacket)
+                _logger?.LogWarning("Received packet with no matching command id: {} body: {}", packet.Id, packet.Body);
+                // The server did not respect our id
+                if (!strictCommandPacketIdMatching && packet.Id == 0)
                 {
-                    //Read any previous messages 
-                    _incomingBuffer.TryGetValue(packet.Id, out string body);
+                    // Get the most recently sent command
+                    taskSource = _pendingCommands
+                        .OrderBy(cmd => cmd.Key)
+                        .Select(cmd => cmd.Value)
+                        .FirstOrDefault();
+                }
+            }
 
-                    if (packet.Body == Constants.MULTI_PACKET_END_RESPONSE)
-                    {
-                        //Avoid yielding
-                        taskSource.SetResult(body ?? string.Empty);
-                        _pendingCommands.TryRemove(packet.Id, out _);
-                        _incomingBuffer.Remove(packet.Id);
-                    }
-                    else
-                    {
-                        //Append to previous messages
-                        _incomingBuffer[packet.Id] = body + packet.Body;
-                    }
+            if (_multiPacket)
+            {
+                //Read any previous messages 
+                _incomingBuffer.TryGetValue(packet.Id, out string body);
+
+                if (packet.Body == Constants.MULTI_PACKET_END_RESPONSE)
+                {
+                    //Avoid yielding
+                    taskSource.SetResult(body ?? string.Empty);
+                    _pendingCommands.TryRemove(packet.Id, out _);
+                    _incomingBuffer.Remove(packet.Id);
                 }
                 else
                 {
-                    //Avoid yielding
-                    taskSource.SetResult(packet.Body);
-                    _pendingCommands.TryRemove(packet.Id, out _);
+                    //Append to previous messages
+                    _incomingBuffer[packet.Id] = body + packet.Body;
                 }
             }
             else
             {
-                _logger?.LogWarning("Received packet with no matching command id: {} body: {}", packet.Id, packet.Body);
+                //Avoid yielding
+                taskSource.SetResult(packet.Body);
+                _pendingCommands.TryRemove(packet.Id, out _);
             }
-
+            
             OnPacketReceived?.Invoke(packet);
         }
 

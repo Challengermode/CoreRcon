@@ -16,7 +16,12 @@
         /// <summary>
         /// The size of the header of an RCON packet.
         /// </summary>
-        internal const int PACKET_HEADER_SIZE = 12;
+        internal const int PACKET_HEADER_SIZE = 8;
+
+        /// <summary>
+        /// The size of the header of an RCON packet.
+        /// </summary>
+        internal const int PACKET_PADDING_SIZE = 2;
 
         /// <summary>
         /// Special response value when you send a Response.Response to the server.

@@ -76,7 +76,7 @@ namespace RconShell
                 port
             );
 
-            rcon = new RCON(endpoint, password, 0);
+            rcon = new RCON(endpoint, password, 0, strictCommandPacketIdMatching: false);
             await rcon.ConnectAsync();
             bool connected = true;
             Console.WriteLine("Connected");
