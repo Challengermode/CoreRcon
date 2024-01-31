@@ -79,7 +79,7 @@ namespace RconShell
             );
             bool connected = false;
             
-            rcon = new RCON(endpoint, password, 0, strictCommandPacketIdMatching: false, autoConnect: autoConnect);
+            rcon = new RCON(endpoint, password, 0, strictCommandPacketIdMatching: true, autoConnect: autoConnect);
             rcon.OnDisconnected += () =>
             {
                 Console.WriteLine("RCON Disconnected");
@@ -161,7 +161,7 @@ namespace RconShell
                     if (retry.ToLower() == "y")
                         break;
 
-                    if (retry.ToLower() == "y")
+                    if (retry.ToLower() == "n")
                     {
                         tryConnect = false;
                         break;
