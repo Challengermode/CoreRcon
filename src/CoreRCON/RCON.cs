@@ -22,6 +22,8 @@ namespace CoreRCON
     /// <param name="password">Rcon password</param>
     /// <param name="timeout">Timeout to connect and send messages in milliseconds. A value of 0 means no timeout</param>
     /// <param name="sourceMultiPacketSupport">Enable source engine trick to receive multi packet responses using trick by Koraktor</param>
+    /// <param name="strictCommandPacketIdMatching">When true, will only match response packets if a matching command is found. Concurrent commands are disabled when set to false. Disable if server does not respect packet ids</param>
+    /// <param name="autoConnect">When true, will attempt to auto connect to the server if the connection has been dropped</param>
     /// <param name="logger">Logger to use, null means none</param>
     public partial class RCON(
         IPEndPoint endpoint,
@@ -29,22 +31,31 @@ namespace CoreRCON
         uint timeout = 10000,
         bool sourceMultiPacketSupport = false,
         bool strictCommandPacketIdMatching = true,
+        bool autoConnect = true,
         ILogger logger = null) : IDisposable
     {
+
+        public bool Authenticated => _authenticationTask is not null && _authenticationTask.Task.IsCompleted 
+                                                                     && _authenticationTask.Task.Result;
+        public bool Connected => _tcp?.Connected == true && _connected;
+        
         // Allows us to keep track of when authentication succeeds, so we can block Connect from returning until it does.
         private TaskCompletionSource<bool> _authenticationTask;
 
         private bool _connected = false;
-
+        
         private readonly IPEndPoint _endpoint = endpoint;
 
         // When generating the packet ID, use a never-been-used (for automatic packets) ID.
         private int _packetId = 0;
 
-        private readonly string _password = password;
+        private string _password = password;
         private readonly int _timeout = (int)timeout;
+        private readonly bool _autoConnect = autoConnect;
+        private readonly bool _strictCommandPacketIdMatching = strictCommandPacketIdMatching;
         private readonly bool _multiPacket = sourceMultiPacketSupport;
 
+        private CancellationTokenSource _pipeCts;
         // Map of pending command references.  These are called when a command with the matching Id (key) is received.  Commands are called only once.
         private ConcurrentDictionary<int, TaskCompletionSource<string>> _pendingCommands { get; } = new ConcurrentDictionary<int, TaskCompletionSource<string>>();
         private Dictionary<int, string> _incomingBuffer { get; } = [];
@@ -52,9 +63,11 @@ namespace CoreRCON
         private Socket _tcp { get; set; }
 
         private readonly ILogger _logger = logger;
+        readonly SemaphoreSlim _requestLimiter = new(1, 1);
         readonly SemaphoreSlim _semaphoreSlim = new(1, 1);
         private Task _socketWriter;
         private Task _socketReader;
+        private Task _requestTask;
 
         /// <summary>
         /// Fired if connection is lost
@@ -71,9 +84,19 @@ namespace CoreRCON
         /// </summary>
         /// <param name="host">Server address</param>
         /// <param name="port">Server port</param>
-        public RCON(IPAddress host, ushort port, string password, uint timeout = 10000,
-            bool sourceMultiPacketSupport = false, bool strictCommandPacketIdMatching = true, ILogger logger = null)
-            : this(new IPEndPoint(host, port), password, timeout, sourceMultiPacketSupport,strictCommandPacketIdMatching, logger)
+        /// <param name="timeout"></param>
+        /// <param name="sourceMultiPacketSupport"></param>
+        /// <param name="strictCommandPacketIdMatching"></param>
+        /// <param name="autoConnect"></param>
+        public RCON(IPAddress host, 
+            ushort port, 
+            string password, 
+            uint timeout = 10000,
+            bool sourceMultiPacketSupport = false, 
+            bool strictCommandPacketIdMatching = true, 
+            bool autoConnect = true, 
+            ILogger logger = null)
+            : this(new IPEndPoint(host, port), password, timeout, sourceMultiPacketSupport,strictCommandPacketIdMatching,autoConnect, logger)
         { }
 
         /// <summary>
@@ -84,9 +107,12 @@ namespace CoreRCON
         {
             if (_connected)
             {
+                if (!Authenticated)
+                    await AuthenticateAsync();
                 return;
             }
-
+            _connected = false;
+            
             using var activity = Tracing.ActivitySource.StartActivity("Connect", ActivityKind.Client);
             activity?.AddTag(Tracing.Tags.Address, _endpoint.Address.ToString());
             activity?.AddTag(Tracing.Tags.Port, _endpoint.Port.ToString());
@@ -95,33 +121,23 @@ namespace CoreRCON
             {
                 ReceiveTimeout = _timeout,
                 SendTimeout = _timeout,
-                NoDelay = true
+                NoDelay = true,
             };
+            _tcp.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
+            
             await _tcp.ConnectAsync(_endpoint)
                 .ConfigureAwait(false);
             _connected = true;
             Pipe pipe = new Pipe();
+            _pipeCts = new CancellationTokenSource();
+            _socketWriter = FillPipeAsync(pipe.Writer, _pipeCts.Token)
+                .ContinueWith(LogDisconnect);
+            _socketReader = ReadPipeAsync(pipe.Reader, _pipeCts.Token)
+                .ContinueWith(LogDisconnect);
 
-            _socketWriter = FillPipeAsync(pipe.Writer)
-                .ContinueWith(LogDisconnect);
-            _socketReader = ReadPipeAsync(pipe.Reader)
-                .ContinueWith(LogDisconnect);
 
             // Wait for successful authentication
-            _authenticationTask = new TaskCompletionSource<bool>();
-            await SendPacketAsync(new RCONPacket(0, PacketType.Auth, _password))
-                .ConfigureAwait(false);
-
-            try
-            {
-                await _authenticationTask.Task
-                    .TimeoutAfter(TimeSpan.FromMilliseconds(_timeout))
-                    .ConfigureAwait(false);
-            }
-            catch (TimeoutException)
-            {
-                throw new TimeoutException("Timeout while waiting for authentication response from server");
-            }
+            await AuthenticateAsync();
         }
 
         /// <summary>
@@ -129,7 +145,7 @@ namespace CoreRCON
         /// </summary>
         /// <param name="writer"></param>
         /// <returns>Producer Task</returns>
-        async Task FillPipeAsync(PipeWriter writer)
+        async Task FillPipeAsync(PipeWriter writer, CancellationToken cancellationToken)
         {
             const int minimumBufferSize = Constants.MIN_PACKET_SIZE;
 
@@ -141,8 +157,9 @@ namespace CoreRCON
                     Memory<byte> memory = writer.GetMemory(minimumBufferSize);
                     int bytesRead = await _tcp.ReceiveAsync(memory, SocketFlags.None)
                         .ConfigureAwait(false);
-                    if (bytesRead == 0)
+                    if (bytesRead == 0 || cancellationToken.IsCancellationRequested)
                     {
+                        // The server has closed the connection
                         break;
                     }
                     // Tell the PipeWriter how much was read from the Socket
@@ -166,6 +183,11 @@ namespace CoreRCON
                 await writer.CompleteAsync()
                     .ConfigureAwait(false);
                 _connected = false;
+                if (_pipeCts != null && !_pipeCts.IsCancellationRequested)
+                {
+                    _pipeCts.Cancel(); // Tell reader to stop waiting
+                    _pipeCts = null;
+                }
                 OnDisconnected?.Invoke();
             }
         }
@@ -175,16 +197,19 @@ namespace CoreRCON
         /// </summary>
         /// <param name="reader"></param>
         /// <returns>Consumer Task</returns>
-        async Task ReadPipeAsync(PipeReader reader)
+        async Task ReadPipeAsync(PipeReader reader, CancellationToken cancellationToken)
         {
             try
             {
                 while (true)
                 {
-                    ReadResult result = await reader.ReadAsync()
+                    ReadResult result = await reader.ReadAsync(cancellationToken)
                         .ConfigureAwait(false);
                     ReadOnlySequence<byte> buffer = result.Buffer;
                     SequencePosition packetStart = buffer.Start;
+
+                    if (cancellationToken.IsCancellationRequested)
+                        break;
 
                     if (buffer.Length < 4)
                     {
@@ -192,10 +217,12 @@ namespace CoreRCON
                         {
                             break;
                         }
+
                         reader.AdvanceTo(packetStart, buffer.End);
                         continue;
                         // Complete header not yet received
                     }
+
                     int size = BitConverter.ToInt32(buffer.Slice(packetStart, 4).ToArray(), 0);
                     if (buffer.Length >= size + 4)
                     {
@@ -203,24 +230,9 @@ namespace CoreRCON
                         SequencePosition packetEnd = buffer.GetPosition(size + 4, packetStart);
                         byte[] byteArr = buffer.Slice(packetStart, packetEnd).ToArray();
                         RCONPacket packet = RCONPacket.FromBytes(byteArr);
-
-                        if (packet.Type == PacketType.AuthResponse)
-                        {
-                            // Failed auth responses return with an ID of -1
-                            if (packet.Id == -1)
-                            {
-                                _authenticationTask.SetException(
-                                    new AuthenticationException($"Authentication failed for {_tcp.RemoteEndPoint}.")
-                                    );
-                            }
-                            // Tell Connect that authentication succeeded
-                            _authenticationTask.SetResult(true);
-                        }
-                        else
-                        {
-                            // Forward rcon packet to handler
-                            RCONPacketReceived(packet);
-                        }
+                        
+                        // Forward rcon packet to handler
+                        RCONPacketReceived(packet);
 
                         reader.AdvanceTo(packetEnd);
                     }
@@ -240,16 +252,15 @@ namespace CoreRCON
             }
             finally
             {
-                // If authentication did not complete
-                _authenticationTask.TrySetException(
-                                    new AuthenticationException($"Server did not respond to auth {_tcp.RemoteEndPoint}.")
-                                    );
-
                 // Mark the PipeReader as complete
                 await reader.CompleteAsync().ConfigureAwait(false);
             }
         }
 
+        public void SetPassword(string password)
+        {
+            _password = password;
+        }
         public void Dispose()
         {
             Dispose(true);
@@ -268,6 +279,12 @@ namespace CoreRCON
                     _tcp.Shutdown(SocketShutdown.Both);
                     _tcp.Dispose();
                 }
+
+                if (_pipeCts != null)
+                {
+                    _pipeCts.Cancel();
+                    _pipeCts = null;
+                }
             }
         }
 
@@ -281,6 +298,7 @@ namespace CoreRCON
         public async Task<T> SendCommandAsync<T>(string command, TimeSpan? overrideTimeout = null)
             where T : class, IParseable, new()
         {
+
             string response = await SendCommandAsync(command, overrideTimeout).ConfigureAwait(false);
             // Se comment about TaskCreationOptions.RunContinuationsAsynchronously in SendComandAsync<string>
             var source = new TaskCompletionSource<T>();
@@ -298,6 +316,43 @@ namespace CoreRCON
             return (T)parsed;
         }
 
+        public async Task<bool> AuthenticateAsync()
+        {
+            // ensure mutual execution of SendPacketAsync and RCONPacketReceived
+            await _semaphoreSlim.WaitAsync();
+            
+            Task completedTask;
+            try
+            {
+                _authenticationTask = new TaskCompletionSource<bool>();
+                await SendPacketAsync(new RCONPacket(0, PacketType.Auth, _password))
+                    .ConfigureAwait(false);
+
+                completedTask = await Task.WhenAny(_authenticationTask.Task, _socketWriter, _socketReader)
+                    .TimeoutAfter(TimeSpan.FromMilliseconds(_timeout))
+                    .ConfigureAwait(false);
+            }
+            catch (TimeoutException)
+            {
+                throw new TimeoutException("Timeout while waiting for authentication response from server");
+            }
+            finally
+            {
+                _semaphoreSlim.Release();
+            }
+
+            if (completedTask == _authenticationTask.Task)
+            {
+                var success = await _authenticationTask.Task;
+                if (!success)
+                    throw new AuthenticationFailedException($"Authentication failed for {_tcp.RemoteEndPoint}.");
+                
+            }
+
+            await completedTask;
+            return true;
+        }
+        
         /// <summary>
         /// Send a command to the server, and wait for the response before proceeding. 
         /// </summary>
@@ -305,19 +360,13 @@ namespace CoreRCON
         /// <exception cref = "System.AggregateException" >Connection exceptions</ exception >
         public async Task<string> SendCommandAsync(string command, TimeSpan? overrideTimeout = null)
         {
+            if (_autoConnect)
+                await ConnectAsync();
+            
+            if (string.IsNullOrEmpty(command))
+                throw new ArgumentException(nameof(command), "Command must be at least one character");
 
-            // This TaskCompletion source could be initialized with TaskCreationOptions.RunContinuationsAsynchronously
-            // However we this library is designed to be able to run without its own thread
-            // Read more about this option here:
-            // https://github.com/davidfowl/AspNetCoreDiagnosticScenarios/blob/master/AsyncGuidance.md#always-create-taskcompletionsourcet-with-taskcreationoptionsruncontinuationsasynchronously
-            var completionSource = new TaskCompletionSource<string>();
             int packetId = Interlocked.Increment(ref _packetId);
-            if (!_pendingCommands.TryAdd(packetId, completionSource))
-            {
-                throw new SocketException();
-            }
-
-
             using var activity = Tracing.ActivitySource.StartActivity("SendCommand", ActivityKind.Client);
             activity?.AddTag(Tracing.Tags.Address, _endpoint.Address.ToString());
             activity?.AddTag(Tracing.Tags.Port, _endpoint.Port.ToString());
@@ -326,10 +375,22 @@ namespace CoreRCON
             activity?.AddTag(Tracing.Tags.CommandCount, command.Count(c => c == ';'));
             activity?.AddTag(Tracing.Tags.CommandFirst, new string(command.TakeWhile(c => c != ' ').ToArray()));
 
-            RCONPacket packet = new RCONPacket(packetId, PacketType.ExecCommand, command);
-
-            // ensuer mutal execution of SendPacketAsync and RCONPacketReceived
+            // ensure mutual execution of SendPacketAsync and RCONPacketReceived
             await _semaphoreSlim.WaitAsync();
+            
+            // This TaskCompletion source could be initialized with TaskCreationOptions.RunContinuationsAsynchronously
+            // However we this library is designed to be able to run without its own thread
+            // Read more about this option here:
+            // https://github.com/davidfowl/AspNetCoreDiagnosticScenarios/blob/master/AsyncGuidance.md#always-create-taskcompletionsourcet-with-taskcreationoptionsruncontinuationsasynchronously
+            var completionSource = new TaskCompletionSource<string>();
+            if (!_pendingCommands.TryAdd(packetId, completionSource))
+            {
+                _semaphoreSlim.Release();
+                throw new SocketException();
+            }
+            
+            RCONPacket packet = new RCONPacket(packetId, PacketType.ExecCommand, command);
+            
             Task completedTask;
             try
             {
@@ -344,6 +405,9 @@ namespace CoreRCON
             }
             finally
             {
+                if (!completionSource.Task.IsCompleted)
+                    completionSource.SetCanceled();
+                
                 _semaphoreSlim.Release();
                 _pendingCommands.TryRemove(packet.Id, out _);
                 _incomingBuffer.Remove(packet.Id);
@@ -355,12 +419,12 @@ namespace CoreRCON
                 activity?.AddTag(Tracing.Tags.ResponseLength, response.Length);
                 return response;
             }
-
+            
             // Observe exception
             await completedTask;
             throw new SocketException();
         }
-
+        
         /// <summary>
         /// Merges RCON packet bodies and resolves the waiting task
         /// with the full body when full response has been recived. 
@@ -369,46 +433,55 @@ namespace CoreRCON
         private void RCONPacketReceived(RCONPacket packet)
         {
             _logger?.LogTrace("RCON packet received: {}", packet.Id);
+
+            if (packet.Type == PacketType.AuthResponse)
+            {
+                // Tell Connect that authentication succeeded (Failed auth responses return with an ID of -1)
+                _authenticationTask.SetResult(packet.Id != -1);
+                return;
+            }
             
-            TaskCompletionSource<string> taskSource;
+            var packetId = packet.Id;
+            TaskCompletionSource<string> taskSource = default;
             // Call pending result and remove from map
             if (!_pendingCommands.TryGetValue(packet.Id, out taskSource))
             {
                 _logger?.LogWarning("Received packet with no matching command id: {} body: {}", packet.Id, packet.Body);
                 // The server did not respect our id
-                if (!strictCommandPacketIdMatching && packet.Id == 0)
+                if (!_strictCommandPacketIdMatching && packet.Id == 0)
                 {
-                    // Get the most recently sent command
-                    taskSource = _pendingCommands
+                    var nextCommandInQueue = _pendingCommands
                         .OrderBy(cmd => cmd.Key)
-                        .Select(cmd => cmd.Value)
                         .FirstOrDefault();
+                    // Get the most recently sent command
+                    taskSource = nextCommandInQueue.Value;
+                    packetId = nextCommandInQueue.Key;
                 }
             }
 
             if (_multiPacket)
             {
                 //Read any previous messages 
-                _incomingBuffer.TryGetValue(packet.Id, out string body);
+                _incomingBuffer.TryGetValue(packetId, out string body);
 
                 if (packet.Body == Constants.MULTI_PACKET_END_RESPONSE)
                 {
                     //Avoid yielding
                     taskSource.SetResult(body ?? string.Empty);
-                    _pendingCommands.TryRemove(packet.Id, out _);
-                    _incomingBuffer.Remove(packet.Id);
+                    _pendingCommands.TryRemove(packetId, out _);
+                    _incomingBuffer.Remove(packetId);
                 }
                 else
                 {
                     //Append to previous messages
-                    _incomingBuffer[packet.Id] = body + packet.Body;
+                    _incomingBuffer[packetId] = body + packet.Body;
                 }
             }
             else
             {
                 //Avoid yielding
                 taskSource.SetResult(packet.Body);
-                _pendingCommands.TryRemove(packet.Id, out _);
+                _pendingCommands.TryRemove(packetId, out _);
             }
             
             OnPacketReceived?.Invoke(packet);
@@ -441,7 +514,7 @@ namespace CoreRCON
                 _logger?.LogError("RCON connection closed");
                 if (task.IsFaulted)
                 {
-                    _logger?.LogError(task.Exception, "conection closed due to exception");
+                    _logger?.LogError(task.Exception, "connection closed due to exception");
                 }
             }
         }

@@ -134,18 +134,16 @@ namespace CoreRCON
             {
                 var delayTask = Task.Delay(timeout.Value, cts.Token);
 
-                var resultTask = await Task.WhenAny(task, delayTask);
+                var resultTask = await Task.WhenAny(task, delayTask).ConfigureAwait(false);
                 if (resultTask == delayTask)
                 {
                     // Operation cancelled
                     throw new TimeoutException();
                 }
-                else
-                {
-                    cts.Cancel();
-                }
 
-                return await task;
+                cts.Cancel();
+
+                return await task.ConfigureAwait(false);
             }
         }
 

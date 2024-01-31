@@ -69,14 +69,16 @@ namespace CoreRCON.PacketFormats
         internal byte[] ToBytes()
         {
             int bodyLength = Encoding.UTF8.GetByteCount(Body);
-            int size = Constants.PACKET_HEADER_SIZE + Constants.PACKET_PADDING_SIZE + bodyLength;
+            //
+            int packetSize = Constants.PACKET_HEADER_SIZE + Constants.PACKET_PADDING_SIZE + bodyLength;
             
-            byte[] packetBytes = new byte[size+4];
+            byte[] packetBytes = new byte[packetSize];
             Span<byte> packetSpan = packetBytes;
 
             // Write packet size
             // Packet size parameter does not include the size of the size parameter itself
-            BinaryPrimitives.WriteInt32LittleEndian(packetSpan, size);
+            var normalizedPacketSize = packetSize - 4;
+            BinaryPrimitives.WriteInt32LittleEndian(packetSpan, normalizedPacketSize); 
             packetSpan = packetSpan.Slice(4);
 
             // Write ID
@@ -87,7 +89,7 @@ namespace CoreRCON.PacketFormats
             BinaryPrimitives.WriteInt32LittleEndian(packetSpan, (int)Type);
 
             // Write body
-            Encoding.UTF8.GetBytes(Body, 0, Body.Length, packetBytes, 12);
+            Encoding.UTF8.GetBytes(Body, 0, Body.Length, packetBytes, Constants.PACKET_HEADER_SIZE);
             
             packetBytes[packetBytes.Length - 2] = 0; // Null terminator for the body
             packetBytes[packetBytes.Length - 1] = 0; // Null terminator for the package
