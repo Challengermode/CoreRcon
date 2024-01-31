@@ -85,7 +85,6 @@ namespace CoreRCON.PacketFormats
 
             // Write type
             BinaryPrimitives.WriteInt32LittleEndian(packetSpan, (int)Type);
-            //packetSpan = packetSpan.Slice(4);
 
             // Write body
             Encoding.UTF8.GetBytes(Body, 0, Body.Length, packetBytes, 12);
