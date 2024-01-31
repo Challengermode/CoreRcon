@@ -446,7 +446,6 @@ namespace CoreRCON
             // Call pending result and remove from map
             if (!_pendingCommands.TryGetValue(packet.Id, out taskSource))
             {
-                _logger?.LogWarning("Received packet with no matching command id: {} body: {}", packet.Id, packet.Body);
                 // The server did not respect our id
                 if (!_strictCommandPacketIdMatching && packet.Id == 0)
                 {
@@ -456,6 +455,11 @@ namespace CoreRCON
                     // Get the most recently sent command
                     taskSource = nextCommandInQueue.Value;
                     packetId = nextCommandInQueue.Key;
+                }
+                else
+                {
+                    _logger?.LogWarning("Received packet with no matching command id: {} body: {}", packet.Id, packet.Body);
+                    return;
                 }
             }
 
