@@ -79,7 +79,7 @@ namespace RconShell
             );
             bool connected = false;
             
-            rcon = new RCON(endpoint, password, 0, strictCommandPacketIdMatching: true, autoConnect: autoConnect);
+            rcon = new RCON(endpoint, password, 0, strictCommandPacketIdMatching: false, autoConnect: autoConnect);
             rcon.OnDisconnected += () =>
             {
                 Console.WriteLine("RCON Disconnected");

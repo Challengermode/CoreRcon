@@ -164,11 +164,9 @@ namespace CoreRCON
                 {
                     throw new TimeoutException();
                 }
-                else
-                {
-                    // Cancel the timer task so that it does not fire
-                    cts.Cancel();
-                }
+
+                // Cancel the timer task so that it does not fire
+                cts.Cancel();
                 await task;
             }
         }

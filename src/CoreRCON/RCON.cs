@@ -183,11 +183,6 @@ namespace CoreRCON
                 await writer.CompleteAsync()
                     .ConfigureAwait(false);
                 _connected = false;
-                if (_pipeCts != null && !_pipeCts.IsCancellationRequested)
-                {
-                    _pipeCts.Cancel(); // Tell reader to stop waiting
-                    _pipeCts = null;
-                }
                 OnDisconnected?.Invoke();
             }
         }
