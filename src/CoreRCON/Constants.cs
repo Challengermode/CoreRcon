@@ -19,9 +19,7 @@
         internal const int PACKET_HEADER_SIZE = 12;
 
         /// <summary>
-        /// The size of the padding of an RCON packet.
-        /// The packet is padded with two null bytes.
-        /// One to terminate the string and one to terminate the packet.
+        /// The size of the header of an RCON packet.
         /// </summary>
         internal const int PACKET_PADDING_SIZE = 2;
 

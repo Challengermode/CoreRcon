@@ -43,14 +43,15 @@ namespace RconShell
         static async Task Main(string[] args)
         {
 
-
+            bool autoConnect = true;
             string host;
             int port = 0;
             string password;
 
-            Console.WriteLine("Enter Server Host/Ip");
+            Console.WriteLine("Enter Server Host/Ip (Default 127.0.0.1)");
 
-            host = Console.ReadLine();
+            var input = Console.ReadLine();
+            host = string.IsNullOrWhiteSpace(input) ? "127.0.0.1" : input;
 
             // Split host and port
             if (host.Contains(":"))
@@ -65,8 +66,9 @@ namespace RconShell
 
             if (port == 0)
             {
-                Console.WriteLine("Enter port (default 27055))");
-                port = int.Parse(Console.ReadLine() ?? "27055");
+                Console.WriteLine("Enter port (default 27055)");
+                input = Console.ReadLine();
+                port = int.Parse( string.IsNullOrWhiteSpace(input) ? "27055" : input);
             }
             Console.WriteLine("Enter password");
             password = Console.ReadLine();
@@ -75,42 +77,101 @@ namespace RconShell
                 addresses.First(),
                 port
             );
-
-            rcon = new RCON(endpoint, password, 0);
-            await rcon.ConnectAsync();
-            bool connected = true;
-            Console.WriteLine("Connected");
-
-            Console.WriteLine("You can now enter commands to send to server:");
+            bool connected = false;
+            
+            rcon = new RCON(endpoint, password, 0, strictCommandPacketIdMatching: false, autoConnect: autoConnect);
             rcon.OnDisconnected += () =>
             {
                 Console.WriteLine("RCON Disconnected");
                 connected = false;
             };
-
-            while (connected)
+            
+            var tryConnect = true;
+            do
             {
-                string command = Console.ReadLine();
-                if (command == "conctest")
+                try
                 {
-                    completed = 0;
-                    List<Thread> threadList = new List<Thread>(ThreadCount);
-                    for (int i = 0; i < ThreadCount; i++)
+                    await rcon.ConnectAsync();
+                    connected = true;
+                    Console.WriteLine($"Connected ({endpoint})");
+                    Console.WriteLine("You can now enter commands to send to server:");
+                    while (connected || autoConnect)
                     {
-                        ThreadStart childref = new ThreadStart(ConcurrentTestAsync);
-                        Thread childThread = new Thread(childref);
-                        childThread.Start();
-                        threadList.Add(childThread);
+                        string command = Console.ReadLine();
+                        if (!connected && !autoConnect)
+                            break;
+                        if (command == "conctest")
+                        {
+                            completed = 0;
+                            List<Thread> threadList = new List<Thread>(ThreadCount);
+                            for (int i = 0; i < ThreadCount; i++)
+                            {
+                                ThreadStart childref = new ThreadStart(ConcurrentTestAsync);
+                                Thread childThread = new Thread(childref);
+                                childThread.Start();
+                                threadList.Add(childThread);
+                            }
+
+                            while (completed < ThreadCount)
+                            {
+                                await Task.Delay(1);
+                            }
+
+                            continue;
+                        }
+
+                        try
+                        {
+                            string response = await rcon.SendCommandAsync(command);
+                            Console.WriteLine(response);
+                        }
+                        catch (ArgumentException ex)
+                        {
+                            var prevColor = Console.ForegroundColor;
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine(ex.Message);
+                            Console.ForegroundColor = prevColor;
+                        }
                     }
-                    while (completed < ThreadCount)
-                    {
-                        await Task.Delay(1);
-                    }
+                }
+                catch (AuthenticationFailedException ex)
+                {
+                    var prevColor = Console.ForegroundColor;
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine("Authentication failed: Invalid password");
+                    Console.ForegroundColor = prevColor;
+                    Console.WriteLine("Enter password");
+                    password = Console.ReadLine();
+                    rcon.SetPassword(password);
                     continue;
                 }
-                string response = await rcon.SendCommandAsync(command);
-                Console.WriteLine(response);
-            }
+                catch (Exception e)
+                {
+                    var prevColor = Console.ForegroundColor;
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.WriteLine(e);
+                    Console.ForegroundColor = prevColor;
+                    
+                }
+                
+                while (true)
+                {
+                    Console.WriteLine("Attempt to reconnect? (y/n)");
+                    var retry = Console.ReadLine();
+                    if (retry.ToLower() == "y")
+                        break;
+
+                    if (retry.ToLower() == "n")
+                    {
+                        tryConnect = false;
+                        break;
+                    }
+
+                    Console.WriteLine("Invalid input.");
+                }
+
+            } while (tryConnect);
+
         }
     }
 }
