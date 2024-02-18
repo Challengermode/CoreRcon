@@ -9,6 +9,7 @@ CoreRCON is an implementation of the RCON protocol on .NET Core. It currently su
 * **Minecraft** - Thanks to [CodingContraption](https://github.com/ScottKaye/CoreRCON/pull/7)
 * **ARK: Survival Evolved** - Confirmed working in 3.0.0 by [tgardner851](https://github.com/ScottKaye/CoreRCON/issues/10)
 * **Project Zomboid Multiplayer** - Confirmed working by [captainqwerty](https://github.com/Challengermode/CoreRcon/issues/26)
+* **Palworld** - Thanks to [ExusAltimus](https://github.com/Challengermode/CoreRcon/pull/57)
 * Potentially other Source-based RCON implementations (untested)
 
 ## Quick Start
