@@ -63,11 +63,9 @@ namespace CoreRCON
         private Socket _tcp { get; set; }
 
         private readonly ILogger _logger = logger;
-        readonly SemaphoreSlim _requestLimiter = new(1, 1);
         readonly SemaphoreSlim _semaphoreSlim = new(1, 1);
         private Task _socketWriter;
         private Task _socketReader;
-        private Task _requestTask;
 
         /// <summary>
         /// Fired if connection is lost

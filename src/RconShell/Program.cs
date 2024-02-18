@@ -134,7 +134,7 @@ namespace RconShell
                         }
                     }
                 }
-                catch (AuthenticationException ex)
+                catch (AuthenticationException)
                 {
                     var prevColor = Console.ForegroundColor;
                     Console.ForegroundColor = ConsoleColor.Red;
