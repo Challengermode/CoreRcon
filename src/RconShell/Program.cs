@@ -68,7 +68,7 @@ namespace RconShell
             {
                 Console.WriteLine("Enter port (default 27055)");
                 input = Console.ReadLine();
-                port = int.Parse( string.IsNullOrWhiteSpace(input) ? "27055" : input);
+                port = int.Parse(string.IsNullOrWhiteSpace(input) ? "27055" : input);
             }
             Console.WriteLine("Enter password");
             password = Console.ReadLine();
@@ -78,14 +78,14 @@ namespace RconShell
                 port
             );
             bool connected = false;
-            
+
             rcon = new RCON(endpoint, password, 0, strictCommandPacketIdMatching: false, autoConnect: autoConnect);
             rcon.OnDisconnected += () =>
             {
                 Console.WriteLine("RCON Disconnected");
                 connected = false;
             };
-            
+
             var tryConnect = true;
             do
             {
@@ -151,9 +151,9 @@ namespace RconShell
                     Console.ForegroundColor = ConsoleColor.Red;
                     Console.WriteLine(e);
                     Console.ForegroundColor = prevColor;
-                    
+
                 }
-                
+
                 while (true)
                 {
                     Console.WriteLine("Attempt to reconnect? (y/n)");

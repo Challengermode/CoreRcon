@@ -35,15 +35,15 @@ namespace CoreRCON
         ILogger logger = null) : IDisposable
     {
 
-        public bool Authenticated => _authenticationTask is not null && _authenticationTask.Task.IsCompleted 
+        public bool Authenticated => _authenticationTask is not null && _authenticationTask.Task.IsCompleted
                                                                      && _authenticationTask.Task.Result;
         public bool Connected => _tcp?.Connected == true && _connected;
-        
+
         // Allows us to keep track of when authentication succeeds, so we can block Connect from returning until it does.
         private TaskCompletionSource<bool> _authenticationTask;
 
         private bool _connected = false;
-        
+
         private readonly IPEndPoint _endpoint = endpoint;
 
         // When generating the packet ID, use a never-been-used (for automatic packets) ID.
@@ -88,15 +88,15 @@ namespace CoreRCON
         /// <param name="sourceMultiPacketSupport"></param>
         /// <param name="strictCommandPacketIdMatching"></param>
         /// <param name="autoConnect"></param>
-        public RCON(IPAddress host, 
-            ushort port, 
-            string password, 
+        public RCON(IPAddress host,
+            ushort port,
+            string password,
             uint timeout = 10000,
-            bool sourceMultiPacketSupport = false, 
-            bool strictCommandPacketIdMatching = true, 
-            bool autoConnect = true, 
+            bool sourceMultiPacketSupport = false,
+            bool strictCommandPacketIdMatching = true,
+            bool autoConnect = true,
             ILogger logger = null)
-            : this(new IPEndPoint(host, port), password, timeout, sourceMultiPacketSupport,strictCommandPacketIdMatching,autoConnect, logger)
+            : this(new IPEndPoint(host, port), password, timeout, sourceMultiPacketSupport, strictCommandPacketIdMatching, autoConnect, logger)
         { }
 
         /// <summary>
@@ -112,7 +112,7 @@ namespace CoreRCON
                 return;
             }
             _connected = false;
-            
+
             using var activity = Tracing.ActivitySource.StartActivity("Connect", ActivityKind.Client);
             activity?.AddTag(Tracing.Tags.Address, _endpoint.Address.ToString());
             activity?.AddTag(Tracing.Tags.Port, _endpoint.Port.ToString());
@@ -124,7 +124,7 @@ namespace CoreRCON
                 NoDelay = true,
             };
             _tcp.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
-            
+
             await _tcp.ConnectAsync(_endpoint)
                 .ConfigureAwait(false);
             _connected = true;
@@ -225,7 +225,7 @@ namespace CoreRCON
                         SequencePosition packetEnd = buffer.GetPosition(size + 4, packetStart);
                         byte[] byteArr = buffer.Slice(packetStart, packetEnd).ToArray();
                         RCONPacket packet = RCONPacket.FromBytes(byteArr);
-                        
+
                         // Forward rcon packet to handler
                         RCONPacketReceived(packet);
 
@@ -315,7 +315,7 @@ namespace CoreRCON
         {
             // ensure mutual execution of SendPacketAsync and RCONPacketReceived
             await _semaphoreSlim.WaitAsync();
-            
+
             Task completedTask;
             try
             {
@@ -357,7 +357,7 @@ namespace CoreRCON
         {
             if (_autoConnect)
                 await ConnectAsync();
-            
+
             if (string.IsNullOrEmpty(command))
                 throw new ArgumentException(nameof(command), "Command must be at least one character");
 
@@ -372,7 +372,7 @@ namespace CoreRCON
 
             // ensure mutual execution of SendPacketAsync and RCONPacketReceived
             await _semaphoreSlim.WaitAsync();
-            
+
             // This TaskCompletion source could be initialized with TaskCreationOptions.RunContinuationsAsynchronously
             // However we this library is designed to be able to run without its own thread
             // Read more about this option here:
@@ -383,9 +383,9 @@ namespace CoreRCON
                 _semaphoreSlim.Release();
                 throw new SocketException();
             }
-            
+
             RCONPacket packet = new RCONPacket(packetId, PacketType.ExecCommand, command);
-            
+
             Task completedTask;
             try
             {
@@ -402,7 +402,7 @@ namespace CoreRCON
             {
                 if (!completionSource.Task.IsCompleted)
                     completionSource.SetCanceled();
-                
+
                 _semaphoreSlim.Release();
                 _pendingCommands.TryRemove(packet.Id, out _);
                 _incomingBuffer.Remove(packet.Id);
@@ -414,12 +414,12 @@ namespace CoreRCON
                 activity?.AddTag(Tracing.Tags.ResponseLength, response.Length);
                 return response;
             }
-            
+
             // Observe exception
             await completedTask;
             throw new SocketException();
         }
-        
+
         /// <summary>
         /// Merges RCON packet bodies and resolves the waiting task
         /// with the full body when full response has been recived. 
@@ -435,7 +435,7 @@ namespace CoreRCON
                 _authenticationTask.SetResult(packet.Id != -1);
                 return;
             }
-            
+
             var packetId = packet.Id;
             TaskCompletionSource<string> taskSource = default;
             // Call pending result and remove from map
@@ -482,7 +482,7 @@ namespace CoreRCON
                 taskSource.SetResult(packet.Body);
                 _pendingCommands.TryRemove(packetId, out _);
             }
-            
+
             OnPacketReceived?.Invoke(packet);
         }
 
