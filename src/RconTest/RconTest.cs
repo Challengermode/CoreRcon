@@ -54,7 +54,7 @@ namespace CoreRCON.Tests
             });
             ILogger<RCON> logger = loggerFactory.CreateLogger<RCON>();
 
-            rconClient = new RCON(_ip, _port, _password, 1000, false, true, logger);
+            rconClient = new RCON(_ip, _port, _password, 1000, sourceMultiPacketSupport: false, strictCommandPacketIdMatching: true, logger: logger);
             await rconClient.ConnectAsync();
         }
 
