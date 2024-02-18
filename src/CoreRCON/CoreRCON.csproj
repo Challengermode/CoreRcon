@@ -8,7 +8,7 @@
     <AssemblyName>CoreRCON</AssemblyName>
     <OutputType>Library</OutputType>
     <PackageId>CoreRCON</PackageId>
-    <PackageTags>valve;rcon;logaddress;cs2;minecraft;tf2</PackageTags>
+    <PackageTags>valve;rcon;logaddress;cs2;minecraft;tf2;palworld</PackageTags>
     <PackageIconUrl></PackageIconUrl>
     <PackageProjectUrl>https://github.com/Challengermode/CoreRcon</PackageProjectUrl>
     <RepositoryType>git</RepositoryType>
