@@ -340,14 +340,14 @@ namespace CoreRCON
             {
                 var success = await _authenticationTask.Task;
                 if (!success)
-                    throw new AuthenticationFailedException($"Authentication failed for {_tcp.RemoteEndPoint}.");
-                
+                    throw new AuthenticationException($"Authentication failed for {_tcp.RemoteEndPoint}.");
+
             }
 
             await completedTask;
             return true;
         }
-        
+
         /// <summary>
         /// Send a command to the server, and wait for the response before proceeding. 
         /// </summary>
