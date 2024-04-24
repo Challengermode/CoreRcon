@@ -8,7 +8,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace CoreRCON.Tests
 {
     [TestClass]
-    public class ParserTest
+    public class ParserUnitTest
     {
         [TestMethod]
         public void testRoundEndParser()
