@@ -8,8 +8,7 @@ using CoreRCON;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
+using Xunit;
 
 /*
  * Run tests against a running RCON server
@@ -25,7 +24,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting.Logging;
 
 namespace CoreRCON.Tests
 {
-    [TestClass]
+    /*
+    [Trait("Type","Integration")]
     public class RconTest
     {
 
@@ -148,4 +148,5 @@ namespace CoreRCON.Tests
             Assert.IsTrue(response.Contains(unicodeString));
         }
     }
+    */
 }

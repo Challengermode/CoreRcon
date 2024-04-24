@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Text;
 using CoreRCON.Parsers.Csgo;
 using CoreRCON.Parsers.Standard;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace CoreRCON.Tests
 {
-    [TestClass]
     public class ParserUnitTest
     {
-        [TestMethod]
+        [Fact]
         public void testRoundEndParser()
         {
             string team = "TERRORIST";
@@ -18,78 +17,78 @@ namespace CoreRCON.Tests
             int ctRounds = 16;
             string testString = $"12:00 junk: Team \"{team}\" triggered \"SFUI_Notice_Terrorists_Win\" (CT \"{ctRounds}\") (T \"{tRounds}\")";
             RoundEndScoreParser parser = new RoundEndScoreParser();
-            Assert.IsTrue(parser.IsMatch(testString));
+            Assert.True(parser.IsMatch(testString));
             RoundEndScore score = parser.Parse(testString);
-            Assert.AreEqual(team, score.WinningTeam);
-            Assert.AreEqual(ctRounds, score.CTScore);
-            Assert.AreEqual(tRounds, score.TScore);
+            Assert.Equal(team, score.WinningTeam);
+            Assert.Equal(ctRounds, score.CTScore);
+            Assert.Equal(tRounds, score.TScore);
         }
 
 
-        [TestMethod]
+        [Fact]
         public void testDisconnectParser()
         {
             string reason = "test123   (oj)";
             string withReason = $"12:00 junk: \"Xavier<2><BOT><TERRORIST>\" disconnected (reason \"{reason}\")";
             string noREason = $"12:00 junk: \"Xavier<2><BOT><TERRORIST>\" disconnected";
             PlayerDisconnectedParser parser = new PlayerDisconnectedParser();
-            Assert.IsTrue(parser.IsMatch(withReason));
-            Assert.IsTrue(parser.IsMatch(noREason));
+            Assert.True(parser.IsMatch(withReason));
+            Assert.True(parser.IsMatch(noREason));
             PlayerDisconnected disconnection = parser.Parse(withReason);
-            Assert.AreEqual(reason, disconnection.Reason);
+            Assert.Equal(reason, disconnection.Reason);
         }
 
-        [TestMethod]
+        [Fact]
         public void testFrag()
         {
             string weapon = "usp_silencer";
             string headShot = $"L 13:37 spam: \"Prince<12><STEAM_1:1:123338101><CT>\" [2264 19 128] killed \"Bot<11><STEAM_1:0:123371565><TERRORIST>\" [1938 -198 320] with \"{weapon}\" (headshot)";
             string kill = $"L 13:37 spam: \"Prince<12><STEAM_1:1:123338101><CT>\" [2264 19 128] killed \"Bot<11><STEAM_1:0:123371565><TERRORIST>\" [1938 -198 320] with \"{weapon}\"";
             FragParser parser = new FragParser();
-            Assert.IsTrue(parser.IsMatch(headShot));
-            Assert.IsTrue(parser.IsMatch(kill));
+            Assert.True(parser.IsMatch(headShot));
+            Assert.True(parser.IsMatch(kill));
             Frag hsFarg = parser.Parse(headShot);
             Frag frag = parser.Parse(kill);
-            Assert.IsTrue(hsFarg.Headshot);
-            Assert.IsFalse(frag.Headshot);
-            Assert.AreEqual(frag.Weapon, weapon);
+            Assert.True(hsFarg.Headshot);
+            Assert.False(frag.Headshot);
+            Assert.Equal(frag.Weapon, weapon);
         }
 
-        [TestMethod]
+        [Fact]
         public void testAssist()
         {
             string test = "L 08/29/2018 - 16:59:36: \"Bot<10><STEAM_1:0:12354210><CT>\" assisted killing \"Bot<11><STEAM_1:0:123371565><TERRORIST>\"";
             FragAssistParser parser = new FragAssistParser();
-            Assert.IsTrue(parser.IsMatch(test));
+            Assert.True(parser.IsMatch(test));
         }
 
-        [TestMethod]
+        [Fact]
         public void testGameOver()
         {
             int ct_score = 1;
             int t_score = 16;
             string test = $"Game Over: competitive mg_active de_cache score {ct_score}:{t_score} after 23 min";
             GameOverScoreParser parser = new GameOverScoreParser();
-            Assert.IsTrue(parser.IsMatch(test));
+            Assert.True(parser.IsMatch(test));
             GameOverScore score = parser.Parse(test);
-            Assert.AreEqual(ct_score, score.CTScore);
-            Assert.AreEqual(t_score, score.TScore);
+            Assert.Equal(ct_score, score.CTScore);
+            Assert.Equal(t_score, score.TScore);
         }
 
-        [TestMethod]
+        [Fact]
         public void testTeamSide()
         {
             string team = "Gamma Squad";
             string side = "CT";
             string test = $"Team playing \"{side}\": {team}";
             TeamSideParser parser = new TeamSideParser();
-            Assert.IsTrue(parser.IsMatch(test));
+            Assert.True(parser.IsMatch(test));
             TeamSide data = parser.Parse(test);
-            Assert.AreEqual(team, data.Team);
-            Assert.AreEqual(side, data.CurentSide);
+            Assert.Equal(team, data.Team);
+            Assert.Equal(side, data.CurentSide);
         }
 
-        [TestMethod]
+        [Fact]
         public void testDamageEvent()
         {
             int dmg = 110;
@@ -106,16 +105,16 @@ namespace CoreRCON.Tests
                 $"(hitgroup \"{hitgroup}\")";
 
             DamageEventParser parser = new DamageEventParser();
-            Assert.IsTrue(parser.IsMatch(test));
+            Assert.True(parser.IsMatch(test));
             DamageEvent e = parser.Parse(test);
-            Assert.AreEqual(dmg, e.Damage);
-            Assert.AreEqual(dmg_armor, e.ArmorDamage);
-            Assert.AreEqual(health, e.PostHealth);
-            Assert.AreEqual(armor, e.PostArmor);
-            Assert.AreEqual(hitgroup, e.HitLocation);
+            Assert.Equal(dmg, e.Damage);
+            Assert.Equal(dmg_armor, e.ArmorDamage);
+            Assert.Equal(health, e.PostHealth);
+            Assert.Equal(armor, e.PostArmor);
+            Assert.Equal(hitgroup, e.HitLocation);
         }
 
-        [TestMethod]
+        [Fact]
         public void testL4DStatus()
         {
             string test = "hostname: l4d hostname\n" +
@@ -126,18 +125,18 @@ namespace CoreRCON.Tests
                 "# userid name                uniqueid            connected ping loss state  adr\n" +
                 "id id id";
             StatusParser parser = new StatusParser();
-            Assert.IsTrue(parser.IsMatch(test));
+            Assert.True(parser.IsMatch(test));
             Status status = parser.Parse(test);
-            Assert.IsFalse(status.Hibernating);
-            Assert.AreEqual("1.1.1.1", status.PublicHost);
-            Assert.AreEqual("127.0.0.1:1234", status.LocalHost);
-            Assert.AreEqual("l4d hostname", status.Hostname);
-            Assert.AreEqual("deathrun_portal at: 0 x, 0 y, 0 z", status.Map);
-            Assert.AreEqual(5, status.Humans);
-            Assert.AreEqual(24, status.MaxPlayers);
+            Assert.False(status.Hibernating);
+            Assert.Equal("1.1.1.1", status.PublicHost);
+            Assert.Equal("127.0.0.1:1234", status.LocalHost);
+            Assert.Equal("l4d hostname", status.Hostname);
+            Assert.Equal("deathrun_portal at: 0 x, 0 y, 0 z", status.Map);
+            Assert.Equal(5, status.Humans);
+            Assert.Equal(24, status.MaxPlayers);
         }
 
-        [TestMethod]
+        [Fact]
         public void testCsgoStatus()
         {
             string test = "hostname: long hostname\n" +
@@ -151,27 +150,27 @@ namespace CoreRCON.Tests
                 "# userid name uniqueid connected ping loss state rate adr\n" +
                 "# 2 \"GOTV\" BOT active 32\n";
             StatusParser parser = new StatusParser();
-            Assert.IsTrue(parser.IsMatch(test));
+            Assert.True(parser.IsMatch(test));
             Status status = parser.Parse(test);
-            Assert.IsFalse(status.Hibernating);
-            Assert.AreEqual("1.1.1.1", status.PublicHost);
-            Assert.AreEqual("127.0.0.1:27711", status.LocalHost);
-            Assert.AreEqual("long hostname", status.Hostname);
-            Assert.AreEqual("de_dust2", status.Map);
-            Assert.AreEqual(2, status.Humans);
-            Assert.AreEqual(6, status.MaxPlayers);
-            Assert.AreEqual(1, status.Bots);
+            Assert.False(status.Hibernating);
+            Assert.Equal("1.1.1.1", status.PublicHost);
+            Assert.Equal("127.0.0.1:27711", status.LocalHost);
+            Assert.Equal("long hostname", status.Hostname);
+            Assert.Equal("de_dust2", status.Map);
+            Assert.Equal(2, status.Humans);
+            Assert.Equal(6, status.MaxPlayers);
+            Assert.Equal(1, status.Bots);
 
         }
 
-        [TestMethod]
+        [Fact]
         public void testHibernatingStatus()
         {
             string test = "Server hibernating";
             StatusParser parser = new StatusParser();
-            Assert.IsTrue(parser.IsMatch(test));
+            Assert.True(parser.IsMatch(test));
             Status status = parser.Parse(test);
-            Assert.IsTrue(status.Hibernating);
+            Assert.True(status.Hibernating);
         }
     }
 }
