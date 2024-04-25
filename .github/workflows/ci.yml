@@ -24,3 +24,6 @@ jobs:
 
     - name: Run Unit Tests
       run: dotnet test --no-build --verbosity normal --filter FullyQualifiedName~Unit
+
+    - name: Run Integration Tests
+      run: dotnet test --no-build --verbosity normal --filter FullyQualifiedName~Integration
