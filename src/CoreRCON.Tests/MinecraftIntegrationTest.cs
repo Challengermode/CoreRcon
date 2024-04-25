@@ -13,14 +13,17 @@ public class MinecraftIntegrationTest : IAsyncLifetime
 {
 
     private const string _rconPassword = "test123";
+    private const ushort _rconPort = 25575;
 
     private readonly IContainer _minecraftContainer = new ContainerBuilder()
             .WithImage("itzg/minecraft-server")
             .WithEnvironment("EULA", "TRUE")
+            .WithEnvironment("ENABLE_RCON", "true")
+            .WithEnvironment("RCON_PORT", _rconPort.ToString())
             .WithEnvironment("RCON_PASSWORD", _rconPassword)
-            .WithExposedPort(25565)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(25565))
-            .WithPortBinding(25565, true)
+            .WithExposedPort(_rconPort)
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(_rconPort))
+            .WithPortBinding(_rconPort, true)
             .Build();
 
 
@@ -38,7 +41,7 @@ public class MinecraftIntegrationTest : IAsyncLifetime
     [Fact]
     public async Task TestMinecraftServer()
     {
-        IPEndPoint ipEndpoint = new IPEndPoint(IPAddress.Parse(_minecraftContainer.IpAddress),_minecraftContainer.GetMappedPublicPort(25565));
+        IPEndPoint ipEndpoint = new IPEndPoint(IPAddress.Parse(_minecraftContainer.Hostname), _minecraftContainer.GetMappedPublicPort(_rconPort));
         RCON rcon = new RCON(ipEndpoint, _rconPassword);
 
         await rcon.ConnectAsync();
