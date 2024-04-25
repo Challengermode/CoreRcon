@@ -5,6 +5,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading.Tasks;
 using CoreRCON;
+using CoreRCON.PacketFormats;
+using Docker.DotNet.Models;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -42,126 +44,82 @@ namespace CoreRCON.Tests
             Assert.Contains("hi", response);
         }
 
-        /*
-
-        RCON rconClient;
-        //Connection settings for server
-        private readonly IPAddress _ip = IPAddress.Parse("127.0.0.1");
-        private readonly ushort _port = 27015;
-        private readonly string _password = "rcon";
-
-        [TestCleanup]
-        public void testClean()
-        {
-            rconClient.Dispose();
-        }
-
-        [TestInitialize]
-        public async Task testInitAsync()
-        {
-            using var loggerFactory = LoggerFactory.Create(builder =>
-            {
-                builder
-                    .SetMinimumLevel(LogLevel.Trace)
-                    .AddFilter("Microsoft", LogLevel.Warning)
-                    .AddFilter("ConsoleApp", LogLevel.Debug)
-                    .AddConsole();
-            });
-            ILogger<RCON> logger = loggerFactory.CreateLogger<RCON>();
-
-            rconClient = new RCON(_ip, _port, _password, 1000, sourceMultiPacketSupport: false, strictCommandPacketIdMatching: true, logger: logger);
-            await rconClient.ConnectAsync();
-        }
-
-
-        [TestMethod]
-        [ExpectedException(typeof(AuthenticationException))]
-        public async Task testBadAuthAsync()
+        [Fact]
+        public async Task TestConnectWithWrongPasswordShouldThrowAuthenticationException()
         {
             //Warning ! This test can ban your ip in the server if sv_rcon_maxfailure is set to 0
             //Use removeip to unban your ip (Default ban period is 60 min)
-            rconClient.Dispose();
-            rconClient = new RCON(_ip, _port, "wrong PW");
-            await rconClient.ConnectAsync();
+            RCON rconClient = new (serverFixture._rconEndpoint, "wrong PW");
+            await Assert.ThrowsAsync<AuthenticationException>(rconClient.ConnectAsync);
+            Assert.True(rconClient.Connected);
+            Assert.False(rconClient.Authenticated);
         }
 
-        [TestMethod]
-        public async Task testEmptyResponseAsync()
+        [Fact]
+        public async Task TestCommentShouldReturnEmptyResponse()
         {
+            using RCON rconClient = serverFixture.GetRconClient();
+            await rconClient.ConnectAsync();
+
             string response = await rconClient.SendCommandAsync("//comment");
-            Assert.AreEqual("", response);
+            Assert.Equal("", response);
         }
 
-        [TestMethod]
-        public async Task testEchoAsync()
+        [Fact]
+        public async Task TestCvarListShouldReturnWholeResponse()
         {
-            string response = await rconClient.SendCommandAsync("say hi");
-            Assert.IsTrue(response.Contains("hi"));
-        }
-
-
-        [TestMethod]
-        public async Task testLongResponseAsync()
-        {
-            rconClient.Dispose();
-            rconClient = new RCON(_ip, _port, _password, 10000, true); //Enable multi packetsupport
+            using RCON rconClient = serverFixture.GetRconClient();
             await rconClient.ConnectAsync();
-            string response = await rconClient.SendCommandAsync("cvarList");
-            Assert.IsTrue(response.EndsWith("total convars/concommands"));
+
+            string response = await rconClient.SendCommandAsync("cvarlist");
+            Assert.EndsWith("total convars/concommands", response);
         }
 
 
-        [TestMethod]
-        public async Task testMultipleCommands()
+        [Fact]
+        public async Task TestMultipleSyncronousCommandsShouldReturn()
         {
+            using RCON rconClient = serverFixture.GetRconClient();
+            await rconClient.ConnectAsync();
+
             for (int i = 0; i < 10; i++)
             {
-                string response = await rconClient.SendCommandAsync($"say {i}");
-                Assert.IsTrue(response.Contains($"{i}"));
+                string response = await rconClient.SendCommandAsync($"echo {i}");
+                Assert.Contains($"{i}", response);
             }
         }
 
-        [TestMethod]
-        public async Task testCommandsConcurent()
+        [Fact]
+        public async Task TestMultipleAsyncronousCommandsShouldReturn()
         {
             List<Task> tasks = new List<Task>();
+
+            using RCON rconClient = serverFixture.GetRconClient();
+            await rconClient.ConnectAsync();
 
             tasks = Enumerable.Range(1, 10)
                 .Select(async (i) =>
                 {
-                    string response = await rconClient.SendCommandAsync($"say {i}");
-                    Console.WriteLine($"recived response {i} : {response}");
-                    Assert.IsTrue(response.Contains($"{i}"));
+                    string response = await rconClient.SendCommandAsync($"echo {i}");
+                    Assert.Contains($"{i}", response);
                 }).ToList();
-            //Parallel.ForEach(tasks, task => task.Start());
             await Task.WhenAll(tasks);
-            Console.Out.Flush();
         }
 
-
-
-        [TestMethod, Timeout(30000)]
-        [ExpectedException(typeof(SocketException))]
-        public async Task testNetworkCut()
+        [Fact]
+        public async Task InfoQueryShouldReturnValidPayload()
         {
-            rconClient.Dispose();
-            rconClient = new RCON(_ip, _port, _password, 0, false);
-            await rconClient.ConnectAsync();
-
-            //1. Put a brakepoint on the line bellow
-            //2. When the debugger breaks quickly unplug the ethernet 
-            //3. Continue
-            // Todo: Find a way to simulate this using software
-            string response = await rconClient.SendCommandAsync("say hi");
+            SourceQueryInfo result = (SourceQueryInfo) await ServerQuery.Info(serverFixture._rconEndpoint, ServerQuery.ServerType.Source);
+            Assert.NotNull(result);
+            Assert.NotNull(result.Name);
         }
 
-        [TestMethod]
-        public async Task testUnicode()
+        [Fact]
+        public async Task PlayerQueryShouldReturnValidPayload()
         {
-            string unicodeString = "éåäö";
-            string response = await rconClient.SendCommandAsync($"say {unicodeString}");
-            Assert.IsTrue(response.Contains(unicodeString));
+            ServerQueryPlayer[] result = await ServerQuery.Players(serverFixture._rconEndpoint);
+            Assert.NotNull(result);
+            Assert.Empty(result);
         }
-        */
     }
 }

@@ -67,19 +67,19 @@ public class CsServerFixture : IAsyncLifetime
         });
     }
 
-    public async Task StopServer()
+    internal async Task StopServer()
     {
         HttpResponseMessage stopResponse = await _client.PostAsync($"{_serverId}/stop", null);
         stopResponse.EnsureSuccessStatusCode();
     }
 
-    public RCON GetRconClient(ITestOutputHelper output = null)
+    internal RCON GetRconClient(ITestOutputHelper output = null)
     {
         ICacheLogger<RCON> rconLogger = output?.BuildLoggerFor<RCON>();
         return new RCON(_rconEndpoint, _rconPassword, logger: rconLogger);
     }
 
-    private async Task StartServer()
+    internal async Task StartServer()
     {
         HttpResponseMessage startResponse = await _client.PostAsync($"{_serverId}/start", null);
         startResponse.EnsureSuccessStatusCode();
