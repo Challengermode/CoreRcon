@@ -8,26 +8,41 @@ using CoreRCON;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.VisualStudio.TestPlatform.Utilities;
+using Neovolve.Logging.Xunit;
 using Xunit;
+using Xunit.Abstractions;
 
-/*
- * Run tests against a running RCON server
- * How to run:
- * Start a server (preferably csgo)
- * set the cvar "log off" on the server
- * configure the properties bellow
- * run the tests
- *
- * Todo: Automate testing
- * Todo: Make sure the tests work with log on
- */
 
 namespace CoreRCON.Tests
 {
-    /*
+
     [Trait("Type","Integration")]
-    public class RconTest
+    public class CsIntegrationTest(CsServerFixture serverFixture, ITestOutputHelper output) : IClassFixture<CsServerFixture>
     {
+        [Fact]
+        public async Task ConnectShouldConnectAndAuthenticate()
+        {
+            using RCON rcon = serverFixture.GetRconClient();
+            await rcon.ConnectAsync();
+
+            await rcon.ConnectAsync();
+
+            Assert.True(rcon.Connected);
+            Assert.True(rcon.Authenticated);
+        }
+
+        [Fact]
+        public async Task EchoCommandShouldReturnInputedText()
+        {
+            using RCON rconClient = serverFixture.GetRconClient();
+            await rconClient.ConnectAsync();
+
+            string response = await rconClient.SendCommandAsync("echo hi");
+            Assert.Contains("hi", response);
+        }
+
+        /*
 
         RCON rconClient;
         //Connection settings for server
@@ -147,6 +162,6 @@ namespace CoreRCON.Tests
             string response = await rconClient.SendCommandAsync($"say {unicodeString}");
             Assert.IsTrue(response.Contains(unicodeString));
         }
+        */
     }
-    */
 }
