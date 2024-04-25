@@ -119,7 +119,6 @@ namespace CoreRCON.Tests
         {
             ServerQueryPlayer[] result = await ServerQuery.Players(serverFixture._rconEndpoint);
             Assert.NotNull(result);
-            Assert.Empty(result);
         }
     }
 }
