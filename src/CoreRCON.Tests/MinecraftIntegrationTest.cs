@@ -1,55 +1,48 @@
 ﻿/*
  Integration test that starts a Minecraft server using testcontainers and sends commands to it.
 */
-using System.Net;
 using System.Threading.Tasks;
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
+using CoreRCON.PacketFormats;
+using Microsoft.VisualStudio.TestPlatform.Utilities;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace CoreRCON.Tests;
 
-public class MinecraftIntegrationTest : IAsyncLifetime
+public class MinecraftIntegrationTest(MincraftServerFixture serverFixture, ITestOutputHelper output) : IClassFixture<MincraftServerFixture>
 {
-
-    private const string _rconPassword = "test123";
-    private const ushort _rconPort = 25575;
-
-    private readonly IContainer _minecraftContainer = new ContainerBuilder()
-            .WithImage("itzg/minecraft-server")
-            .WithEnvironment("EULA", "TRUE")
-            .WithEnvironment("ENABLE_RCON", "true")
-            .WithEnvironment("RCON_PORT", _rconPort.ToString())
-            .WithEnvironment("RCON_PASSWORD", _rconPassword)
-            .WithEnvironment("ONLINE_MODE", "FALSE")
-            .WithEnvironment("VIEW_DISTANCE", "1")
-            .WithEnvironment("LEVEL_TYPE", "FLAT")
-            .WithExposedPort(_rconPort)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(_rconPort))
-            .WithPortBinding(_rconPort, true)
-            .Build();
-
-
-    public Task InitializeAsync()
-    {
-        return _minecraftContainer.StartAsync();
-    }
-
-    public Task DisposeAsync()
-    {
-        return _minecraftContainer.DisposeAsync().AsTask();
-    }
-
-
     [Fact]
-    public async Task TestMinecraftServer()
+    public async Task TestConnectShouldConnectAndAuthenticate()
     {
-        IPEndPoint ipEndpoint = new IPEndPoint(IPAddress.Parse(_minecraftContainer.Hostname), _minecraftContainer.GetMappedPublicPort(_rconPort));
-        RCON rcon = new RCON(ipEndpoint, _rconPassword);
+        using var logger = output.BuildLoggerFor<RCON>();
+        using RCON rcon = new RCON(serverFixture.RconEndpoint, serverFixture.RconPassword, logger: logger);
 
         await rcon.ConnectAsync();
 
         Assert.True(rcon.Connected);
         Assert.True(rcon.Authenticated);
+    }
+
+    [Fact]
+    public async Task TestListCommandShouldReturn()
+    {
+        using var logger = output.BuildLoggerFor<RCON>();
+        using RCON rcon = new RCON(serverFixture.RconEndpoint, serverFixture.RconPassword, logger: logger);
+
+        await rcon.ConnectAsync();
+
+        string response = await rcon.SendCommandAsync("list");
+
+        Assert.Contains("There are 0 of a max of 20 players online", response);
+    }
+
+    [Fact]
+    public async Task TestInfoQueryShouldReturn()
+    {
+        MinecraftQueryInfo serverInfo = (MinecraftQueryInfo) await ServerQuery
+            .Info(serverFixture.QueryEndpoint, ServerQuery.ServerType.Minecraft);
+
+        Assert.Equal("MINECRAFT", serverInfo.GameId);
+        Assert.Equal("0", serverInfo.NumPlayers);
     }
 }
