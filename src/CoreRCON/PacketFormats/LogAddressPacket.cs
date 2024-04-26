@@ -71,8 +71,15 @@ namespace CoreRCON.PacketFormats
         /// <returns>Created packet.</returns>
         internal static LogAddressPacket FromBytes(byte[] buffer)
         {
-            if (buffer.Length < 7) throw new InvalidDataException("LogAddress packet is of an invalid length.");
-            if (!buffer.Take(4).SequenceEqual(new byte[] { 0xFF, 0xFF, 0xFF, 0xFF })) throw new InvalidDataException("LogAddress packet does not contain a valid header.");
+            if (buffer.Length < 7)
+            {
+                throw new InvalidDataException("LogAddress packet is of an invalid length.");
+            }
+
+            if (!buffer.Take(4).SequenceEqual(new byte[] { 0xFF, 0xFF, 0xFF, 0xFF }))
+            {
+                throw new InvalidDataException("LogAddress packet does not contain a valid header.");
+            }
 
             // 83 = magic byte
             bool hasPassword = buffer[5] == 83;

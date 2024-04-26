@@ -34,14 +34,27 @@ namespace CoreRCON.PacketFormats
         /// <returns>Created packet.</returns>
         internal static RCONPacket FromBytes(byte[] buffer)
         {
-            if (buffer == null) throw new NullReferenceException("Byte buffer cannot be null.");
-            if (buffer.Length < 4) throw new InvalidDataException("Buffer does not contain a size field.");
+            if (buffer == null)
+            {
+                throw new NullReferenceException("Byte buffer cannot be null.");
+            }
+
+            if (buffer.Length < 4)
+            {
+                throw new InvalidDataException("Buffer does not contain a size field.");
+            }
 
             ReadOnlySpan<byte> bufferSpan = buffer;
             int size = BinaryPrimitives.ReadInt32LittleEndian(bufferSpan.Slice(0, 4));
-            if (size > buffer.Length - 4) throw new InvalidDataException("Packet size specified was larger then buffer");
+            if (size > buffer.Length - 4)
+            {
+                throw new InvalidDataException("Packet size specified was larger then buffer");
+            }
 
-            if (size < 10) throw new InvalidDataException("Packet received was invalid.");
+            if (size < 10)
+            {
+                throw new InvalidDataException("Packet received was invalid.");
+            }
 
             int id = BinaryPrimitives.ReadInt32LittleEndian(bufferSpan.Slice(4, 4));
             PacketType type = (PacketType)BinaryPrimitives.ReadInt32LittleEndian(bufferSpan.Slice(8, 4));

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -34,11 +33,11 @@ namespace CoreRCON
             Stat = 0x00
         }
 
-        private static UdpClient _client;
-        private static readonly byte[] _magic = new byte[] { 0xFE, 0xFD }; // Minecraft 'magic' bytes.
-        private static readonly byte[] _sessionid = new byte[] { 0x01, 0x02, 0x03, 0x04 };
-        private static readonly byte[] _asInfoPayload = new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0x54, 0x53, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x20, 0x45, 0x6E, 0x67, 0x69, 0x6E, 0x65, 0x20, 0x51, 0x75, 0x65, 0x72, 0x79, 0x00 };
-        private static readonly byte[] _asInfochallengeResponse = new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0x41 };
+        private static readonly UdpClient _client;
+        private static readonly byte[] _magic = [0xFE, 0xFD]; // Minecraft 'magic' bytes.
+        private static readonly byte[] _sessionid = [0x01, 0x02, 0x03, 0x04];
+        private static readonly byte[] _asInfoPayload = [0xFF, 0xFF, 0xFF, 0xFF, 0x54, 0x53, 0x6F, 0x75, 0x72, 0x63, 0x65, 0x20, 0x45, 0x6E, 0x67, 0x69, 0x6E, 0x65, 0x20, 0x51, 0x75, 0x65, 0x72, 0x79, 0x00];
+        private static readonly byte[] _asInfochallengeResponse = [0xFF, 0xFF, 0xFF, 0xFF, 0x41];
 
         static ServerQuery()
         {
@@ -69,14 +68,14 @@ namespace CoreRCON
                         // If Server responds with a Challenge number we need to resend the request with that number
                         if (sourceResponse.Buffer.ToArray().Take(_asInfochallengeResponse.Length).SequenceEqual(_asInfochallengeResponse))
                         {
-                            byte[] challenge = _asInfoPayload.Concat(sourceResponse.Buffer.Skip(5).Take(4)).ToArray();
+                            byte[] challenge = [.. _asInfoPayload, .. sourceResponse.Buffer.Skip(5).Take(4)];
                             await _client.SendAsync(challenge, challenge.Length, host);
                             sourceResponse = await _client.ReceiveAsync();
                         }
                         return SourceQueryInfo.FromBytes(sourceResponse.Buffer);
                     case ServerType.Minecraft:
                         var padding = new byte[] { 0x00, 0x00, 0x00, 0x00 };
-                        var datagram = _magic.Concat(new[] { (byte)PacketType.Stat }).Concat(_sessionid).Concat(await Challenge(host, ServerType.Minecraft)).Concat(padding).ToArray();
+                        var datagram = _magic.Concat([(byte)PacketType.Stat]).Concat(_sessionid).Concat(await Challenge(host, ServerType.Minecraft)).Concat(padding).ToArray();
                         await _client.SendAsync(datagram, datagram.Length, host);
                         var mcResponce = await _client.ReceiveAsync();
                         return MinecraftQueryInfo.FromBytes(mcResponce.Buffer);
@@ -115,11 +114,11 @@ namespace CoreRCON
             switch (type)
             {
                 case ServerType.Source:
-                    await _client.SendAsync(new byte[] { 0xFF, 0xFF, 0xFF, 0xFF, 0x55, 0xFF, 0xFF, 0xFF, 0xFF }, 9, host);
+                    await _client.SendAsync([0xFF, 0xFF, 0xFF, 0xFF, 0x55, 0xFF, 0xFF, 0xFF, 0xFF], 9, host);
                     return (await _client.ReceiveAsync()).Buffer.Skip(5).Take(4).ToArray();
                 case ServerType.Minecraft:
                     // Create request
-                    var datagram = _magic.Concat(new[] { (byte)PacketType.Handshake }).Concat(_sessionid).ToArray();
+                    var datagram = _magic.Concat([(byte)PacketType.Handshake]).Concat(_sessionid).ToArray();
                     await _client.SendAsync(datagram, datagram.Length, host);
 
                     // Parse challenge token

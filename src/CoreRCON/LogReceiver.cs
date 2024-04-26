@@ -15,7 +15,11 @@ namespace CoreRCON
         {
             get
             {
-                if (_udp == null) return 0;
+                if (_udp == null)
+                {
+                    return 0;
+                }
+
                 return ((IPEndPoint)(_udp.Client.LocalEndPoint)).Port;
             }
         }
@@ -80,18 +84,27 @@ namespace CoreRCON
 
             // Call LogAddress listeners
             foreach (var listener in _logListeners)
+            {
                 listener?.Invoke(packet);
+            }
 
             string body = packet.Body;
-            if (body.Length == 0) return;
+            if (body.Length == 0)
+            {
+                return;
+            }
 
             // Call parsers
             foreach (var parser in _parseListeners)
+            {
                 parser.TryCallback(body);
+            }
 
             // Call raw listeners
             foreach (var listener in _rawListeners)
+            {
                 listener?.Invoke(body);
+            }
         }
 
         private async Task StartListener()
@@ -101,7 +114,10 @@ namespace CoreRCON
                 var result = await _udp.ReceiveAsync();
 
                 // If the packet did not come from an accepted source, throw it out
-                if (!_sources.Contains(result.RemoteEndPoint)) return;
+                if (!_sources.Contains(result.RemoteEndPoint))
+                {
+                    return;
+                }
 
                 // Parse out the LogAddress packet
                 LogAddressPacket packet = LogAddressPacket.FromBytes(result.Buffer);

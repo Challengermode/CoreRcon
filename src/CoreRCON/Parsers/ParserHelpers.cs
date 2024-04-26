@@ -10,7 +10,11 @@ namespace CoreRCON.Parsers
             where T : class, IParseable, new()
         {
             var implementor = new T().GetType().GetTypeInfo().Assembly.GetTypes().FirstOrDefault(t => t.GetTypeInfo().GetInterfaces().Contains(typeof(IParser<T>)));
-            if (implementor == null) throw new ArgumentException($"A class implementing {nameof(IParser)}<{typeof(T).FullName}> was not found in the assembly.");
+            if (implementor == null)
+            {
+                throw new ArgumentException($"A class implementing {nameof(IParser)}<{typeof(T).FullName}> was not found in the assembly.");
+            }
+
             return (IParser<T>)Activator.CreateInstance(implementor);
         }
     }

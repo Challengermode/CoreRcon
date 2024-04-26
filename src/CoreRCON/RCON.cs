@@ -106,7 +106,9 @@ namespace CoreRCON
             if (_connected)
             {
                 if (!Authenticated)
+                {
                     await AuthenticateAsync();
+                }
                 return;
             }
             _connected = false;
@@ -132,7 +134,6 @@ namespace CoreRCON
                 .ContinueWith(LogDisconnect);
             _socketReader = ReadPipeAsync(pipe.Reader, _pipeCts.Token)
                 .ContinueWith(LogDisconnect);
-
 
             // Wait for successful authentication
             await AuthenticateAsync();
@@ -164,7 +165,7 @@ namespace CoreRCON
                     writer.Advance(bytesRead);
 
                     // Make the data available to the PipeReader
-                    FlushResult result = await writer.FlushAsync()
+                    FlushResult result = await writer.FlushAsync(cancellationToken)
                         .ConfigureAwait(false);
 
                     if (result.IsCompleted)
@@ -176,7 +177,7 @@ namespace CoreRCON
             finally
             {
                 // Tell the PipeReader that there's no more data coming
-                await writer.FlushAsync()
+                await writer.FlushAsync(cancellationToken)
                     .ConfigureAwait(false);
                 await writer.CompleteAsync()
                     .ConfigureAwait(false);
@@ -202,7 +203,9 @@ namespace CoreRCON
                     SequencePosition packetStart = buffer.Start;
 
                     if (cancellationToken.IsCancellationRequested)
+                    {
                         break;
+                    }
 
                     if (buffer.Length < 4)
                     {
@@ -338,8 +341,9 @@ namespace CoreRCON
             {
                 var success = await _authenticationTask.Task;
                 if (!success)
+                {
                     throw new AuthenticationException($"Authentication failed for {_tcp.RemoteEndPoint}.");
-
+                }
             }
 
             await completedTask;
@@ -354,10 +358,14 @@ namespace CoreRCON
         public async Task<string> SendCommandAsync(string command, TimeSpan? overrideTimeout = null)
         {
             if (_autoConnect)
+            {
                 await ConnectAsync();
+            }
 
             if (string.IsNullOrEmpty(command))
-                throw new ArgumentException(nameof(command), "Command must be at least one character");
+            {
+                throw new ArgumentException("Command must be at least one character", nameof(command));
+            }
 
             using var activity = Tracing.ActivitySource.StartActivity("SendCommand", ActivityKind.Client);
             activity?.AddTag(Tracing.Tags.Address, _endpoint.Address.ToString());
@@ -390,7 +398,7 @@ namespace CoreRCON
             {
                 await SendPacketAsync(packet).ConfigureAwait(false);
                 completedTask = await Task.WhenAny(completionSource.Task, _socketWriter, _socketReader)
-                    .TimeoutAfter(overrideTimeout.HasValue ? overrideTimeout.Value : TimeSpan.FromMilliseconds(_timeout))
+                    .TimeoutAfter(overrideTimeout ?? TimeSpan.FromMilliseconds(_timeout))
                     .ConfigureAwait(false);
             }
             catch (TimeoutException)
@@ -400,7 +408,9 @@ namespace CoreRCON
             finally
             {
                 if (!completionSource.Task.IsCompleted)
+                {
                     completionSource.SetCanceled();
+                }
 
                 _semaphoreSlim.Release();
                 _pendingCommands.TryRemove(packet.Id, out _);
@@ -436,9 +446,8 @@ namespace CoreRCON
             }
 
             var packetId = packet.Id;
-            TaskCompletionSource<string> taskSource = default;
             // Call pending result and remove from map
-            if (!_pendingCommands.TryGetValue(packet.Id, out taskSource))
+            if (!_pendingCommands.TryGetValue(packet.Id, out TaskCompletionSource<string> taskSource))
             {
                 // The server did not respect our id
                 if (!_strictCommandPacketIdMatching && packet.Id == 0)
@@ -492,7 +501,11 @@ namespace CoreRCON
         private async Task SendPacketAsync(RCONPacket packet)
         {
             _logger?.LogTrace("Send packet: {}", packet.Id);
-            if (!_connected) throw new InvalidOperationException("Connection is closed.");
+            if (!_connected)
+            {
+                throw new InvalidOperationException("Connection is closed.");
+            }
+
             await _tcp.SendAsync(new ArraySegment<byte>(packet.ToBytes()), SocketFlags.None)
                 .ConfigureAwait(false);
             if (packet.Type == PacketType.ExecCommand && _multiPacket)

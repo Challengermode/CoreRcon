@@ -25,7 +25,11 @@ namespace CoreRCON
         public static string ReadNullTerminatedString(this byte[] bytes, int start, ref int i)
         {
             int end = Array.IndexOf(bytes, (byte)0, start);
-            if (end < 0) throw new ArgumentOutOfRangeException("Byte array does not appear to contain a null byte to stop reading a string at.");
+            if (end < 0)
+            {
+                throw new ArgumentOutOfRangeException("Byte array does not appear to contain a null byte to stop reading a string at.");
+            }
+
             i = end + 1;
             return Encoding.UTF8.GetString(bytes, start, end - start);
         }
@@ -128,7 +132,10 @@ namespace CoreRCON
         // See https://github.com/davidfowl/AspNetCoreDiagnosticScenarios/blob/master/Scenarios/Infrastructure/TaskExtensions.cs
         public static async Task<T> TimeoutAfter<T>(this Task<T> task, TimeSpan? timeout)
         {
-            if (timeout == null || timeout == TimeSpan.Zero) return await task;
+            if (timeout == null || timeout == TimeSpan.Zero)
+            {
+                return await task;
+            }
 
             using (var cts = new CancellationTokenSource())
             {
