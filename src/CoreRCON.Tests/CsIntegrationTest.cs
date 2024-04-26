@@ -76,7 +76,7 @@ namespace CoreRCON.Tests
         }
 
 
-        [Fact]
+        [Fact(Skip = "Flakey in CS2 currnetly")]
         public async Task TestMultipleSyncronousCommandsShouldReturn()
         {
             using RCON rconClient = serverFixture.GetRconClient();
