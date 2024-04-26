@@ -359,17 +359,18 @@ namespace CoreRCON
             if (string.IsNullOrEmpty(command))
                 throw new ArgumentException(nameof(command), "Command must be at least one character");
 
-            int packetId = Interlocked.Increment(ref _packetId);
             using var activity = Tracing.ActivitySource.StartActivity("SendCommand", ActivityKind.Client);
             activity?.AddTag(Tracing.Tags.Address, _endpoint.Address.ToString());
             activity?.AddTag(Tracing.Tags.Port, _endpoint.Port.ToString());
-            activity?.AddTag(Tracing.Tags.PacketId, packetId);
             activity?.AddTag(Tracing.Tags.CommandLength, command.Length);
             activity?.AddTag(Tracing.Tags.CommandCount, command.Count(c => c == ';'));
             activity?.AddTag(Tracing.Tags.CommandFirst, new string(command.TakeWhile(c => c != ' ').ToArray()));
 
             // ensure mutual execution of SendPacketAsync and RCONPacketReceived
+            // Todo: Add option to enable concurrent commands for RCON backends that supports it
             await _semaphoreSlim.WaitAsync();
+            int packetId = Interlocked.Increment(ref _packetId);
+            activity?.AddTag(Tracing.Tags.PacketId, packetId);
 
             // This TaskCompletion source could be initialized with TaskCreationOptions.RunContinuationsAsynchronously
             // However we this library is designed to be able to run without its own thread
