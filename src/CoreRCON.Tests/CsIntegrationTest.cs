@@ -28,10 +28,9 @@ namespace CoreRCON.Tests
             using RCON rcon = serverFixture.GetRconClient();
             await rcon.ConnectAsync();
 
-            await rcon.ConnectAsync();
-
             Assert.True(rcon.Connected);
             Assert.True(rcon.Authenticated);
+            output.WriteLine("Rcon connection to server successfull");
         }
 
         [Fact]
@@ -92,7 +91,7 @@ namespace CoreRCON.Tests
         [Fact]
         public async Task TestMultipleAsyncronousCommandsShouldReturn()
         {
-            List<Task> tasks = new List<Task>();
+            List<Task> tasks = [];
 
             using RCON rconClient = serverFixture.GetRconClient();
             await rconClient.ConnectAsync();

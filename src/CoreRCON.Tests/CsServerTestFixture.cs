@@ -43,7 +43,7 @@ public class CsServerFixture : IAsyncLifetime
         string authString = Convert.ToBase64String(Encoding.ASCII.GetBytes(configuration["DATHOST_API_TOKEN"]));
         _client.DefaultRequestHeaders.Add("Authorization", "Basic " + authString);
         // random password for the RCON server
-        _rconPassword = Guid.NewGuid().ToString("N").Substring(0, 10);
+        _rconPassword = Guid.NewGuid().ToString("N")[..10];
 
         _retryPolicy = Policy
             .Handle<HttpRequestException>()

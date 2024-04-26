@@ -515,7 +515,6 @@ namespace CoreRCON
                 await _tcp.SendAsync(new ArraySegment<byte>(emptyPackage.ToBytes()), SocketFlags.None)
                     .ConfigureAwait(false);
             }
-
         }
 
         private void LogDisconnect(Task task)
