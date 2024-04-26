@@ -9,6 +9,7 @@ using Xunit.Abstractions;
 
 namespace CoreRCON.Tests;
 
+[Trait("Type", "Integration")]  
 public class MinecraftIntegrationTest(MincraftServerFixture serverFixture, ITestOutputHelper output) : IClassFixture<MincraftServerFixture>
 {
     [Fact]
@@ -21,6 +22,36 @@ public class MinecraftIntegrationTest(MincraftServerFixture serverFixture, ITest
 
         Assert.True(rcon.Connected);
         Assert.True(rcon.Authenticated);
+    }
+
+    [Fact]
+    public async Task TestInvalidCommandShouldEchoBack()
+    {
+        using var logger = output.BuildLoggerFor<RCON>();
+        using RCON rcon = new RCON(serverFixture.RconEndpoint, serverFixture.RconPassword, logger: logger);
+
+        await rcon.ConnectAsync();
+
+        string response = await rcon.SendCommandAsync("invalid");
+
+        Assert.Contains("invalid", response);
+    }
+
+    [Fact]
+    public async Task TestConcurrentRequests()
+    {
+        using var logger = output.BuildLoggerFor<RCON>();
+        using RCON rcon = new RCON(serverFixture.RconEndpoint, serverFixture.RconPassword, logger: logger);
+
+        await rcon.ConnectAsync();
+
+        Task<string> task1 = rcon.SendCommandAsync("command1");
+        Task<string> task2 = rcon.SendCommandAsync("command2");
+
+        await Task.WhenAll(task1, task2);
+
+        Assert.Contains("command1", task1.Result);
+        Assert.Contains("command2", task2.Result);
     }
 
     [Fact]
