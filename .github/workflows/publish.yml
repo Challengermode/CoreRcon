@@ -1,0 +1,30 @@
+name: Publish NuGet Package
+on:
+  release:
+    types: [created]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build src/CoreRCON/CoreRCON.csproj --no-restore --configuration Release
+
+    - name: Pack
+      run: dotnet pack src/CoreRCON/CoreRCON.csproj --no-build --configuration Release --output out
+
+    - name: Push
+      run: |
+        dotnet nuget push "out/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+        dotnet nuget push "out/*.snupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json

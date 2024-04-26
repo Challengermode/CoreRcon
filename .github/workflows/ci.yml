@@ -1,18 +1,38 @@
-# .github/workflows/ci.yml
-name: CI
+name: Github Actions CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**/*.md'
+      - '**/*.gitignore'
+      - '**/*.gitattributes'
+      - '**/*.editorconfig'
+      - 'docs/**'
+  pull_request:
+
+  workflow_dispatch:
+    
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+      DOTNET_NOLOGO: true
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '8.0.x'
 
@@ -21,6 +41,11 @@ jobs:
 
     - name: Build
       run: dotnet build --no-restore
-
+  
     - name: Run Unit Tests
       run: dotnet test --no-build --verbosity normal --filter FullyQualifiedName~Unit
+
+    - name: Run Integration Tests
+      env:
+        APPSECRETS_DATHOST_API_TOKEN: ${{ secrets.DATHOST_API_TOKEN }}
+      run: dotnet test --no-build --verbosity normal --filter FullyQualifiedName~Integration
