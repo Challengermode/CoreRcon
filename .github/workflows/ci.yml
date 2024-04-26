@@ -8,6 +8,8 @@ on:
       - '**/*.md'
       - '**/*.gitignore'
       - '**/*.gitattributes'
+      - '**/*.editorconfig'
+      - 'docs/**'
   pull_request:
 
   workflow_dispatch:
