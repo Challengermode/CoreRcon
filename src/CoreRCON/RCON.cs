@@ -25,7 +25,7 @@ namespace CoreRCON
     /// <param name="strictCommandPacketIdMatching">When true, will only match response packets if a matching command is found. Concurrent commands are disabled when set to false. Disable if server does not respect packet ids</param>
     /// <param name="autoConnect">When true, will attempt to auto connect to the server if the connection has been dropped</param>
     /// <param name="logger">Logger to use, null means none</param>
-    public partial class RCON(
+    public sealed class RCON(
         IPEndPoint endpoint,
         string password,
         uint timeout = 10000,
