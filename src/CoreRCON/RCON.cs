@@ -183,6 +183,8 @@ namespace CoreRCON
                     .ConfigureAwait(false);
                 _connected = false;
                 OnDisconnected?.Invoke();
+                _tcp?.Close();
+                _tcp?.Dispose();
             }
         }
 
@@ -268,18 +270,16 @@ namespace CoreRCON
             if (disposing)
             {
                 _connected = false;
-                _semaphoreSlim?.Dispose();
+                _semaphoreSlim?.Dispose();              
+                
+                _tcp?.Shutdown(SocketShutdown.Both);
+                _pipeCts.CancelAfter(_timeout);
 
-                if (_tcp != null)
+                // Tcp is disposed in the FillPipeAsync and ReadPipeAsync methods
+                if (_socketWriter is null || _socketWriter.IsCompleted)
                 {
-                    _tcp.Shutdown(SocketShutdown.Both);
-                    _tcp.Dispose();
-                }
-
-                if (_pipeCts != null)
-                {
-                    _pipeCts.Cancel();
-                    _pipeCts = null;
+                    _tcp?.Dispose();
+                    _pipeCts.Dispose();
                 }
             }
         }
