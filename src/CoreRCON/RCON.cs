@@ -130,10 +130,8 @@ namespace CoreRCON
             _connected = true;
             Pipe pipe = new Pipe();
             _pipeCts = new CancellationTokenSource();
-            _socketWriter = FillPipeAsync(pipe.Writer, _pipeCts.Token)
-                .ContinueWith(LogDisconnect);
-            _socketReader = ReadPipeAsync(pipe.Reader, _pipeCts.Token)
-                .ContinueWith(LogDisconnect);
+            _socketWriter = FillPipeAsync(pipe.Writer, _pipeCts.Token);
+            _socketReader = ReadPipeAsync(pipe.Reader, _pipeCts.Token);
 
             // Wait for successful authentication
             await AuthenticateAsync();
@@ -174,21 +172,30 @@ namespace CoreRCON
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Error while receiving data on TCP socket");
+                FaultAllPendingCommands(ex);
+                throw;
+            }
             finally
             {
                 // Tell the PipeReader that there's no more data coming
-                await writer.FlushAsync(cancellationToken)
-                    .ConfigureAwait(false);
-                await writer.CompleteAsync()
-                    .ConfigureAwait(false);
+                await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+                await writer.CompleteAsync().ConfigureAwait(false);
                 _connected = false;
                 OnDisconnected?.Invoke();
 
                 // Clean up resources
                 _tcp?.Close();
                 _tcp?.Dispose();
+                _tcp = null;
                 _pipeCts?.Dispose();
+                _pipeCts = null;
             }
+
+            _logger?.LogInformation("TCP socket closed gracefully");
+            CancleAllPendingCommands();
         }
 
         /// <summary>
@@ -251,10 +258,19 @@ namespace CoreRCON
                     }
                 }
             }
-            finally
+            catch (Exception ex)
             {
+                _logger?.LogError(ex, "Error while parsing RCON data");
+
+                FaultAllPendingCommands(ex);
+
                 // Mark the PipeReader as complete
+                _connected = false;
+                _tcp?.Close();
+                _tcp?.Dispose();
+                _tcp = null;
                 await reader.CompleteAsync().ConfigureAwait(false);
+                throw;
             }
         }
 
@@ -269,33 +285,22 @@ namespace CoreRCON
             GC.SuppressFinalize(this);
         }
 
-        private void DisposeCore(bool disposing)
-        {
-            if (disposing)
-            {
-                _connected = false;
-                _semaphoreSlim?.Dispose();              
-                
-                _tcp?.Shutdown(SocketShutdown.Both);
-                _pipeCts.CancelAfter(_timeout);
-
-                // Tcp is disposed in the FillPipeAsync and ReadPipeAsync methods
-                if (_socketWriter is null || _socketWriter.IsCompleted)
-                {
-                    _tcp?.Dispose();
-                    _pipeCts.Dispose();
-                }
-            }
-        }
-
         public async ValueTask DisposeAsync()
         {
             DisposeCore(true);
-            await (_socketWriter ?? Task.CompletedTask);
-            await (_socketReader ?? Task.CompletedTask);
-            _pipeCts.Cancel();
-            _pipeCts.Dispose();
-            GC.SuppressFinalize(this);
+            try
+            {
+                await (_socketWriter ?? Task.CompletedTask);
+                await (_socketReader ?? Task.CompletedTask);
+            }finally // Exception should be observed earlier
+            {
+                _tcp?.Dispose();
+                _tcp = null;
+                _pipeCts?.Cancel();
+                _pipeCts?.Dispose();
+                _pipeCts = null;
+                GC.SuppressFinalize(this);
+            }
         }
 
         /// <summary>
@@ -326,21 +331,22 @@ namespace CoreRCON
             return (T)parsed;
         }
 
-        public async Task<bool> AuthenticateAsync()
+        public async Task AuthenticateAsync()
         {
             // ensure mutual execution of SendPacketAsync and RCONPacketReceived
             await _semaphoreSlim.WaitAsync();
 
-            Task completedTask;
             try
             {
                 _authenticationTask = new TaskCompletionSource<bool>();
                 await SendPacketAsync(new RCONPacket(0, PacketType.Auth, _password))
                     .ConfigureAwait(false);
 
-                completedTask = await Task.WhenAny(_authenticationTask.Task, _socketWriter, _socketReader)
-                    .TimeoutAfter(TimeSpan.FromMilliseconds(_timeout))
-                    .ConfigureAwait(false);
+                bool success = await _authenticationTask.Task.ConfigureAwait(false);
+                if (!success)
+                {
+                    throw new AuthenticationException($"Authentication failed for {_tcp.RemoteEndPoint}.");
+                }
             }
             catch (TimeoutException)
             {
@@ -350,18 +356,6 @@ namespace CoreRCON
             {
                 _semaphoreSlim.Release();
             }
-
-            if (completedTask == _authenticationTask.Task)
-            {
-                var success = await _authenticationTask.Task;
-                if (!success)
-                {
-                    throw new AuthenticationException($"Authentication failed for {_tcp.RemoteEndPoint}.");
-                }
-            }
-
-            await completedTask;
-            return true;
         }
 
         /// <summary>
@@ -407,13 +401,14 @@ namespace CoreRCON
 
             RCONPacket packet = new RCONPacket(packetId, PacketType.ExecCommand, command);
 
-            Task completedTask;
             try
             {
                 await SendPacketAsync(packet).ConfigureAwait(false);
-                completedTask = await Task.WhenAny(completionSource.Task, _socketWriter, _socketReader)
+                string response = await completionSource.Task
                     .TimeoutAfter(overrideTimeout ?? TimeSpan.FromMilliseconds(_timeout))
                     .ConfigureAwait(false);
+
+                return response;
             }
             catch (TimeoutException)
             {
@@ -430,17 +425,6 @@ namespace CoreRCON
                 _pendingCommands.TryRemove(packet.Id, out _);
                 _incomingBuffer.Remove(packet.Id);
             }
-
-            if (completedTask == completionSource.Task)
-            {
-                string response = await completionSource.Task;
-                activity?.AddTag(Tracing.Tags.ResponseLength, response.Length);
-                return response;
-            }
-
-            // Observe exception
-            await completedTask;
-            throw new SocketException();
         }
 
         /// <summary>
@@ -455,7 +439,7 @@ namespace CoreRCON
             if (packet.Type == PacketType.AuthResponse)
             {
                 // Tell Connect that authentication succeeded (Failed auth responses return with an ID of -1)
-                _authenticationTask.SetResult(packet.Id != -1);
+                _authenticationTask?.TrySetResult(packet.Id != -1);
                 return;
             }
 
@@ -531,14 +515,39 @@ namespace CoreRCON
             }
         }
 
-        private void LogDisconnect(Task task)
+        private void FaultAllPendingCommands(Exception ex)
         {
-            if (_connected)
+            _authenticationTask?.TrySetException(ex);
+            foreach (var pendingCommand in _pendingCommands)
             {
-                _logger?.LogError("RCON connection closed");
-                if (task.IsFaulted)
+                pendingCommand.Value.TrySetException(ex);
+            }
+        }
+
+        private void CancleAllPendingCommands()
+        {
+            _authenticationTask?.TrySetCanceled();
+            foreach (var pendingCommand in _pendingCommands)
+            {
+                pendingCommand.Value.TrySetCanceled();
+            }
+        }
+
+        private void DisposeCore(bool disposing)
+        {
+            if (disposing)
+            {
+                _connected = false;
+                _semaphoreSlim?.Dispose();
+
+                _tcp?.Shutdown(SocketShutdown.Both);
+                _pipeCts?.CancelAfter(_timeout);
+
+                // Tcp is disposed in the FillPipeAsync and ReadPipeAsync methods
+                if (_socketWriter is null || _socketWriter.IsCompleted)
                 {
-                    _logger?.LogError(task.Exception, "connection closed due to exception");
+                    _tcp?.Dispose();
+                    _pipeCts?.Dispose();
                 }
             }
         }
