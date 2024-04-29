@@ -32,7 +32,7 @@ namespace CoreRCON
         bool sourceMultiPacketSupport = false,
         bool strictCommandPacketIdMatching = true,
         bool autoConnect = true,
-        ILogger logger = null) : IDisposable
+        ILogger logger = null) : IDisposable, IAsyncDisposable
     {
 
         public bool Authenticated => _authenticationTask is not null && _authenticationTask.Task.IsCompleted
@@ -183,8 +183,11 @@ namespace CoreRCON
                     .ConfigureAwait(false);
                 _connected = false;
                 OnDisconnected?.Invoke();
+
+                // Clean up resources
                 _tcp?.Close();
                 _tcp?.Dispose();
+                _pipeCts?.Dispose();
             }
         }
 
@@ -259,13 +262,14 @@ namespace CoreRCON
         {
             _password = password;
         }
+
         public void Dispose()
         {
-            Dispose(true);
+            DisposeCore(true);
             GC.SuppressFinalize(this);
         }
 
-        protected virtual void Dispose(bool disposing)
+        private void DisposeCore(bool disposing)
         {
             if (disposing)
             {
@@ -282,6 +286,16 @@ namespace CoreRCON
                     _pipeCts.Dispose();
                 }
             }
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            DisposeCore(true);
+            await (_socketWriter ?? Task.CompletedTask);
+            await (_socketReader ?? Task.CompletedTask);
+            _pipeCts.Cancel();
+            _pipeCts.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         /// <summary>

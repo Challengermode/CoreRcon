@@ -36,7 +36,7 @@ namespace CoreRCON.Tests
         [Fact]
         public async Task EchoCommandShouldReturnInputedText()
         {
-            using RCON rconClient = serverFixture.GetRconClient();
+            await using RCON rconClient = serverFixture.GetRconClient();
             await rconClient.ConnectAsync();
 
             string response = await rconClient.SendCommandAsync("echo hi");
