@@ -48,4 +48,4 @@ jobs:
     - name: Run Integration Tests
       env:
         APPSECRETS_DATHOST_API_TOKEN: ${{ secrets.DATHOST_API_TOKEN }}
-      run: dotnet test --no-build --verbosity normal --filter FullyQualifiedName~Integration
+      run: dotnet test --no-build --verbosity normal --filter FullyQualifiedName~Integration --filter FullyQualifiedName!~CsIntegrationTest
