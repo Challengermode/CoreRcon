@@ -12,7 +12,7 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="8.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.1" />
-    <PackageReference Include="Neovolve.Logging.Xunit" Version="5.0.0" />
+    <PackageReference Include="Neovolve.Logging.Xunit" Version="6.0.0" />
     <PackageReference Include="Polly" Version="8.3.1" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.analyzers" Version="1.12.0" />
