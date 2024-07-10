@@ -26,7 +26,7 @@ var rcon = new RCON(IPAddress.Parse("10.0.0.1"), 27015, "secret-password");
 await rcon.ConnectAsync();
 
 // Send a simple command and retrive response as string
-string respnose = await rcon.SendCommandAsync("echo hi");
+string response = await rcon.SendCommandAsync("echo hi");
 
 // Send "status" and try to parse the response
 Status status = await rcon.SendCommandAsync<Status>("status");
