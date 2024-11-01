@@ -34,15 +34,31 @@ namespace CoreRCON
         bool autoConnect = true,
         ILogger logger = null) : IDisposable
     {
-
+        /// <summary>
+        /// Returns true if the client is authenticated with the server.
+        /// </summary>
         public bool Authenticated => _authenticationTask is not null && _authenticationTask.Task.IsCompleted
                                                                      && _authenticationTask.Task.Result;
+        /// <summary>
+        /// Returns true if the client is connected to the server.
+        /// </summary>
         public bool Connected => _tcp?.Connected == true && _connected;
 
+        /// <summary>
+        /// IP Endpoint the RCON client will connect to
+        /// </summary>        
         public readonly IPEndPoint IPEndpoint = endpoint;
 
+        /// <summary>
+        /// IP Address the RCON client will connect to
+        /// </summary>
+        /// <seealso cref="IPEndpoint"/>
         public readonly IPAddress IPAddress = endpoint.Address;
 
+        /// <summary>
+        /// Port the RCON client will connect to
+        /// </summary>
+        /// <seealso cref="IPEndpoint"/>
         public readonly int Port = endpoint.Port;
 
         // Allows us to keep track of when authentication succeeds, so we can block Connect from returning until it does.
@@ -257,10 +273,15 @@ namespace CoreRCON
             }
         }
 
+        /// <summary>
+        /// Set the password for the RCON connection.  This can be called at any time, and will be used for the next authentication attempt.
+        /// </summary>
+        /// <param name="password"></param>
         public void SetPassword(string password)
         {
             _password = password;
         }
+
         public void Dispose()
         {
             Dispose(true);
@@ -316,6 +337,12 @@ namespace CoreRCON
             return (T)parsed;
         }
 
+        /// <summary>
+        /// Authenticate with the server.  This is called automatically by ConnectAsync, but can be called manually if desired.
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="TimeoutException">If Authentication attempt timed out</exception>
+        /// <exception cref="AuthenticationException">If Authentication attempt failed</exception>
         public async Task<bool> AuthenticateAsync()
         {
             // ensure mutual execution of SendPacketAsync and RCONPacketReceived
