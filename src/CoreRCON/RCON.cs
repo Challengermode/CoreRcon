@@ -39,12 +39,16 @@ namespace CoreRCON
                                                                      && _authenticationTask.Task.Result;
         public bool Connected => _tcp?.Connected == true && _connected;
 
+        public readonly IPEndPoint IPEndpoint = endpoint;
+
+        public readonly IPAddress IPAddress = endpoint.Address;
+
+        public readonly int Port = endpoint.Port;
+
         // Allows us to keep track of when authentication succeeds, so we can block Connect from returning until it does.
         private TaskCompletionSource<bool> _authenticationTask;
 
         private bool _connected = false;
-
-        private readonly IPEndPoint _endpoint = endpoint;
 
         // When generating the packet ID, use a never-been-used (for automatic packets) ID.
         private int _packetId = 0;
@@ -114,8 +118,8 @@ namespace CoreRCON
             _connected = false;
 
             using var activity = Tracing.ActivitySource.StartActivity("Connect", ActivityKind.Client);
-            activity?.AddTag(Tracing.Tags.Address, _endpoint.Address.ToString());
-            activity?.AddTag(Tracing.Tags.Port, _endpoint.Port.ToString());
+            activity?.AddTag(Tracing.Tags.Address, IPEndpoint.Address.ToString());
+            activity?.AddTag(Tracing.Tags.Port, IPEndpoint.Port.ToString());
 
             _tcp = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp)
             {
@@ -125,7 +129,7 @@ namespace CoreRCON
             };
             _tcp.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, true);
 
-            await _tcp.ConnectAsync(_endpoint)
+            await _tcp.ConnectAsync(IPEndpoint)
                 .ConfigureAwait(false);
             _connected = true;
             Pipe pipe = new Pipe();
@@ -368,8 +372,9 @@ namespace CoreRCON
             }
 
             using var activity = Tracing.ActivitySource.StartActivity("SendCommand", ActivityKind.Client);
-            activity?.AddTag(Tracing.Tags.Address, _endpoint.Address.ToString());
-            activity?.AddTag(Tracing.Tags.Port, _endpoint.Port.ToString());
+
+            activity?.AddTag(Tracing.Tags.Address, IPEndpoint.Address.ToString());
+            activity?.AddTag(Tracing.Tags.Port, IPEndpoint.Port.ToString());
             activity?.AddTag(Tracing.Tags.CommandLength, command.Length);
             activity?.AddTag(Tracing.Tags.CommandCount, command.Count(c => c == ';'));
             activity?.AddTag(Tracing.Tags.CommandFirst, new string(command.TakeWhile(c => c != ' ').ToArray()));
