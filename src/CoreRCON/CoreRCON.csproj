@@ -40,7 +40,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.2" />
     <PackageReference Include="System.Diagnostics.DiagnosticSource" Version="9.0.2" />
-    <PackageReference Include="System.IO.Pipelines" Version="9.0.1" />
+    <PackageReference Include="System.IO.Pipelines" Version="9.0.2" />
   </ItemGroup>
 
   <ItemGroup>
